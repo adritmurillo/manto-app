@@ -29,6 +29,7 @@ public interface GuardianApiService {
     Call<Object> acceptInvitation(@Path("token") String token, @Header("X-User-Id") String protectedUserId);
 
     // Obtener los vínculos activos del usuario
-    @GET("api/v1/links/active")
-    Call<List<LinkResponse>> getActiveLinks(@Header("X-User-Id") String userId);
+    // Obtener TODOS los vínculos del usuario (Activos y Pendientes)
+    @GET("api/v1/links")
+    Call<List<LinkResponse>> getMyLinks(@Header("X-User-Id") String userId);
 }

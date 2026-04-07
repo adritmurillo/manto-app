@@ -76,13 +76,14 @@ public class MainActivity extends AppCompatActivity {
                                         String postgresId = response.body().getId();
 
                                         // 3. Preguntamos si tiene vínculos activos
-                                        RetrofitClient.getApiService().getActiveLinks(postgresId).enqueue(new Callback<List<LinkResponse>>() {
+                                        // 3. Preguntamos si tiene CUALQUIER vínculo
+                                        RetrofitClient.getApiService().getMyLinks(postgresId).enqueue(new Callback<List<LinkResponse>>() {
                                             @Override
                                             public void onResponse(Call<List<LinkResponse>> call, Response<List<LinkResponse>> responseLinks) {
                                                 Intent intent;
 
+                                                // Si la lista NO está vacía (tiene vínculos pendientes o activos)
                                                 if (responseLinks.isSuccessful() && responseLinks.body() != null && !responseLinks.body().isEmpty()) {
-                                                    // Tiene vínculos. Averiguar si es Anfitrión o Protegido
                                                     LinkResponse link = responseLinks.body().get(0);
 
                                                     if (link.getHostId().equals(postgresId)) {
@@ -93,12 +94,12 @@ public class MainActivity extends AppCompatActivity {
                                                         intent = new Intent(MainActivity.this, ProtectedDashboardActivity.class);
                                                     }
                                                 } else {
-                                                    // No tiene vínculos. Va a la pantalla de crear/ingresar códigos.
+                                                    // No tiene ningún vínculo. Va a la HomeActivity
                                                     intent = new Intent(MainActivity.this, HomeActivity.class);
                                                 }
 
                                                 startActivity(intent);
-                                                finish(); // Cerramos MainActivity
+                                                finish();
                                             }
 
                                             @Override

@@ -1,5 +1,6 @@
 package com.guardianapp.mobile;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.widget.Button;
 import android.widget.EditText;
@@ -110,6 +111,12 @@ public class HomeActivity extends AppCompatActivity {
             public void onResponse(Call<Object> call, Response<Object> response) {
                 if (response.isSuccessful()) {
                     Toast.makeText(HomeActivity.this, "¡Vinculación Exitosa!", Toast.LENGTH_LONG).show();
+
+                    // ¡EL INTENT QUE FALTABA PARA VIAJAR AL DASHBOARD!
+                    Intent intent = new Intent(HomeActivity.this, ProtectedDashboardActivity.class);
+                    startActivity(intent);
+                    finish(); // Cerramos esta pantalla para que no pueda volver atrás
+
                 } else {
                     Toast.makeText(HomeActivity.this, "Código inválido o expirado", Toast.LENGTH_SHORT).show();
                 }

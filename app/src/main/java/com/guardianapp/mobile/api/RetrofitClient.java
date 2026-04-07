@@ -5,8 +5,10 @@ import retrofit2.converter.gson.GsonConverterFactory;
 
 public class RetrofitClient {
 
-    // 10.0.2.2 apunta al localhost (puerto 8080) de tu computadora
-    private static final String BASE_URL = "http://10.0.2.2:8080/";
+    // URL pública de Ngrok apuntando a tu Spring Boot en localhost:8080
+    // IMPORTANTE: ¡Nunca olvides el slash "/" al final!
+    private static final String BASE_URL = "https://unpennoned-myelographically-virgilio.ngrok-free.dev/";
+
     private static Retrofit retrofit = null;
 
     public static GuardianApiService getApiService() {
