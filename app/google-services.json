@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "523742368515",
+    "project_id": "manto-app-ade75",
+    "storage_bucket": "manto-app-ade75.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:523742368515:android:971867b05245cf84c50f36",
+        "android_client_info": {
+          "package_name": "com.guardianapp.mobile"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAfhHAGpK2kmrGz2__mRcc5K3sNNNxipYw"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
