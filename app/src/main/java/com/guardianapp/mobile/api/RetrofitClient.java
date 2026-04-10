@@ -15,7 +15,7 @@ public class RetrofitClient {
         if (retrofit == null) {
             retrofit = new Retrofit.Builder()
                     .baseUrl(BASE_URL)
-                    .addConverterFactory(GsonConverterFactory.create()) // Convierte de JSON a Java y viceversa
+                    .addConverterFactory(GsonConverterFactory.create())
                     .build();
         }
         return retrofit.create(GuardianApiService.class);

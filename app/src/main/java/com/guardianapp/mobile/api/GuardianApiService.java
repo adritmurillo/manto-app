@@ -6,6 +6,7 @@ import retrofit2.Call;
 import retrofit2.http.GET;
 import retrofit2.http.Header;
 import retrofit2.http.POST;
+import retrofit2.http.PUT;
 import retrofit2.http.Path;
 import retrofit2.http.Query;
 import retrofit2.http.Body;
@@ -32,4 +33,26 @@ public interface GuardianApiService {
     // Obtener TODOS los vínculos del usuario (Activos y Pendientes)
     @GET("api/v1/links")
     Call<List<LinkResponse>> getMyLinks(@Header("X-User-Id") String userId);
+
+
+    @POST("api/v1/alerts")
+    Call<AlertResponse> createAlert(@Body CreateAlertRequest request);
+
+    @GET("api/v1/alerts/{id}")
+    Call<AlertResponse> getAlert(@Path("id") String alertId);
+
+    @GET("api/v1/alerts/pending")
+    Call<List<AlertResponse>> getPendingAlerts(@Header("X-User-Id") String hostId);
+
+    @PUT("api/v1/alerts/{id}/resolve")
+    Call<AlertResponse> resolveAlert(@Path("id") String alertId, @Body ResolveAlertRequest request);
+
+    // El Protegido envía el PIN para activar el vínculo
+    // El Protegido envía el código de 6 dígitos para activar el vínculo
+    @POST("api/v1/links/{linkId}/confirm")
+    Call<LinkResponse> confirmLink(
+            @Path("linkId") String linkId,
+            @Header("X-User-Id") String protectedId,
+            @Body ConfirmLinkRequest request
+    );
 }

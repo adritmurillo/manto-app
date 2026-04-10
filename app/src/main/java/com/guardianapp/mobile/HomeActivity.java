@@ -110,10 +110,12 @@ public class HomeActivity extends AppCompatActivity {
             @Override
             public void onResponse(Call<Object> call, Response<Object> response) {
                 if (response.isSuccessful()) {
-                    Toast.makeText(HomeActivity.this, "¡Vinculación Exitosa!", Toast.LENGTH_LONG).show();
+                    Toast.makeText(HomeActivity.this, "¡Código aceptado! Configurando seguridad...", Toast.LENGTH_SHORT).show();
 
-                    // ¡EL INTENT QUE FALTABA PARA VIAJAR AL DASHBOARD!
-                    Intent intent = new Intent(HomeActivity.this, ProtectedDashboardActivity.class);
+                    // ¡EL CAMBIO FLUIDO!
+                    // Regresamos al Enrutador (MainActivity) para que detecte que estamos PENDING
+                    // y nos mande automáticamente a la pantalla de Verificación del PIN.
+                    Intent intent = new Intent(HomeActivity.this, MainActivity.class);
                     startActivity(intent);
                     finish(); // Cerramos esta pantalla para que no pueda volver atrás
 

@@ -75,7 +75,6 @@ public class MainActivity extends AppCompatActivity {
                                     if (response.isSuccessful() && response.body() != null) {
                                         String postgresId = response.body().getId();
 
-                                        // 3. Preguntamos si tiene vínculos activos
                                         // 3. Preguntamos si tiene CUALQUIER vínculo
                                         RetrofitClient.getApiService().getMyLinks(postgresId).enqueue(new Callback<List<LinkResponse>>() {
                                             @Override
@@ -87,14 +86,24 @@ public class MainActivity extends AppCompatActivity {
                                                     LinkResponse link = responseLinks.body().get(0);
 
                                                     if (link.getHostId().equals(postgresId)) {
-                                                        // Es el Anfitrión
+                                                        // Es el Anfitrión (Él siempre va al Dashboard, ahí verá el PIN)
                                                         intent = new Intent(MainActivity.this, HostDashboardActivity.class);
+                                                        intent.putExtra("HOST_ID", postgresId);
                                                     } else {
                                                         // Es el Abuelo/Protegido
-                                                        intent = new Intent(MainActivity.this, ProtectedDashboardActivity.class);
+                                                        if ("ACTIVE".equals(link.getStatus())) {
+                                                            // Ya está validado -> Va a su panel con el botón de la trampa
+                                                            intent = new Intent(MainActivity.this, ProtectedDashboardActivity.class);
+                                                        } else {
+                                                            // Está PENDING -> Va a la pantalla para poner el PIN
+                                                            intent = new Intent(MainActivity.this, VerificationActivity.class);
+                                                        }
+                                                        // A ambos lados mandamos los IDs en la mochila
+                                                        intent.putExtra("PROTECTED_ID", postgresId);
+                                                        intent.putExtra("LINK_ID", link.getId());
                                                     }
                                                 } else {
-                                                    // No tiene ningún vínculo. Va a la HomeActivity
+                                                    // No tiene ningún vínculo. Va a la pantalla de crear/poner código
                                                     intent = new Intent(MainActivity.this, HomeActivity.class);
                                                 }
 
