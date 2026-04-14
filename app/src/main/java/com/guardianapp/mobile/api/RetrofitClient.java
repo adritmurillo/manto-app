@@ -20,4 +20,21 @@ public class RetrofitClient {
         }
         return retrofit.create(GuardianApiService.class);
     }
+
+    public static String getBaseUrl() {
+        return BASE_URL;
+    }
+
+    public static String getWebSocketUrl() {
+        String url = BASE_URL;
+        if (url.startsWith("https://")) {
+            url = "wss://" + url.substring("https://".length());
+        } else if (url.startsWith("http://")) {
+            url = "ws://" + url.substring("http://".length());
+        }
+        if (url.endsWith("/")) {
+            url = url.substring(0, url.length() - 1);
+        }
+        return url + "/ws";
+    }
 }

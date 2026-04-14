@@ -14,9 +14,12 @@ import androidx.appcompat.app.AppCompatActivity;
 
 import com.google.firebase.auth.FirebaseAuth;
 import com.guardianapp.mobile.api.AlertResponse;
+import com.guardianapp.mobile.api.IdentityVerificationResponse;
 import com.guardianapp.mobile.api.LinkResponse;
 import com.guardianapp.mobile.api.ResolveAlertRequest;
+import com.guardianapp.mobile.api.RespondIdentityVerificationRequest;
 import com.guardianapp.mobile.api.RetrofitClient;
+import com.guardianapp.mobile.realtime.StompRealtimeClient;
 
 import java.util.List;
 import retrofit2.Call;
@@ -33,6 +36,8 @@ public class HostDashboardActivity extends AppCompatActivity {
     private TextView tvConnectionCodeDisplay;
     private Button btnRefreshStatus;
     private boolean isAlertShowing = false;
+    private final StompRealtimeClient verificationRealtimeClient = new StompRealtimeClient();
+    private final StompRealtimeClient linkRealtimeClient = new StompRealtimeClient();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -65,6 +70,42 @@ public class HostDashboardActivity extends AppCompatActivity {
 
         // 2. Iniciamos el radar para buscar alertas de páginas falsas
         startPolling();
+
+        connectRealtime();
+    }
+
+    private void connectRealtime() {
+        if (miIdAnfitrion == null || miIdAnfitrion.isBlank()) {
+            return;
+        }
+        String wsUrl = RetrofitClient.getWebSocketUrl();
+        String verificationTopic = "/topic/host/" + miIdAnfitrion + "/identity-verifications";
+        verificationRealtimeClient.connect(wsUrl, verificationTopic, new StompRealtimeClient.EventListener() {
+            @Override
+            public void onEvent(String body) {
+                runOnUiThread(() -> {
+                    if (!isAlertShowing) {
+                        checkPendingIdentityVerifications();
+                    }
+                });
+            }
+
+            @Override
+            public void onConnected() {
+            }
+        });
+
+        String linkTopic = "/topic/host/" + miIdAnfitrion + "/links";
+        linkRealtimeClient.connect(wsUrl, linkTopic, new StompRealtimeClient.EventListener() {
+            @Override
+            public void onEvent(String body) {
+                runOnUiThread(HostDashboardActivity.this::loadLinkStatus);
+            }
+
+            @Override
+            public void onConnected() {
+            }
+        });
     }
 
     private void startPolling() {
@@ -72,11 +113,32 @@ public class HostDashboardActivity extends AppCompatActivity {
         pollingRunnable = new Runnable() {
             @Override
             public void run() {
-                if (!isAlertShowing) checkPendingAlerts();
+                if (!isAlertShowing) {
+                    checkPendingIdentityVerifications();
+                    checkPendingAlerts();
+                }
                 pollingHandler.postDelayed(this, 3000);
             }
         };
         pollingHandler.post(pollingRunnable);
+    }
+
+    private void checkPendingIdentityVerifications() {
+        if (miIdAnfitrion == null || isAlertShowing) return;
+
+        RetrofitClient.getApiService().getPendingIdentityVerifications(miIdAnfitrion)
+                .enqueue(new Callback<List<IdentityVerificationResponse>>() {
+                    @Override
+                    public void onResponse(Call<List<IdentityVerificationResponse>> call, Response<List<IdentityVerificationResponse>> response) {
+                        if (response.isSuccessful() && response.body() != null && !response.body().isEmpty() && !isAlertShowing) {
+                            showIdentityVerificationPopup(response.body().get(0));
+                        }
+                    }
+
+                    @Override
+                    public void onFailure(Call<List<IdentityVerificationResponse>> call, Throwable t) {
+                    }
+                });
     }
 
     private void stopPolling() {
@@ -132,6 +194,49 @@ public class HostDashboardActivity extends AppCompatActivity {
         });
     }
 
+    private void showIdentityVerificationPopup(IdentityVerificationResponse verification) {
+        isAlertShowing = true;
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setTitle("🔐 Verificación de identidad");
+        builder.setMessage(
+                "Tu protegido solicita verificar una llamada.\n\n" +
+                "Persona que dice ser: " + verification.getClaimedPerson() + "\n" +
+                "Código de verificación familiar: " + verification.getChallengeCode() + "\n\n" +
+                "Confirma que ese mismo código lo vea tu familiar."
+        );
+        builder.setCancelable(false);
+
+        builder.setPositiveButton("No soy yo", (dialog, which) ->
+                respondIdentityVerification(verification.getId(), false, "No soy yo, cortar llamada")
+        );
+
+        builder.setNegativeButton("Sí soy yo", (dialog, which) ->
+                respondIdentityVerification(verification.getId(), true, "Sí, identidad confirmada")
+        );
+
+        builder.show();
+    }
+
+    private void respondIdentityVerification(String verificationId, boolean approved, String note) {
+        RespondIdentityVerificationRequest request = new RespondIdentityVerificationRequest(
+                miIdAnfitrion,
+                approved,
+                note
+        );
+        RetrofitClient.getApiService().respondIdentityVerification(verificationId, request)
+                .enqueue(new Callback<IdentityVerificationResponse>() {
+                    @Override
+                    public void onResponse(Call<IdentityVerificationResponse> call, Response<IdentityVerificationResponse> response) {
+                        isAlertShowing = false;
+                    }
+
+                    @Override
+                    public void onFailure(Call<IdentityVerificationResponse> call, Throwable t) {
+                        isAlertShowing = false;
+                    }
+                });
+    }
+
     private void loadLinkStatus() {
         if (miIdAnfitrion == null) return;
 
@@ -162,5 +267,7 @@ public class HostDashboardActivity extends AppCompatActivity {
     protected void onDestroy() {
         super.onDestroy();
         stopPolling();
+        verificationRealtimeClient.disconnect();
+        linkRealtimeClient.disconnect();
     }
 }

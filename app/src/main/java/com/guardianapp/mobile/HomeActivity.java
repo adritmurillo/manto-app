@@ -2,6 +2,8 @@ package com.guardianapp.mobile;
 
 import android.content.Intent;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
@@ -12,8 +14,11 @@ import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 
 import com.guardianapp.mobile.api.InvitationResponse;
+import com.guardianapp.mobile.api.LinkResponse;
 import com.guardianapp.mobile.api.RetrofitClient;
 import com.guardianapp.mobile.api.UserResponse;
+
+import java.util.List;
 
 import retrofit2.Call;
 import retrofit2.Callback;
@@ -26,6 +31,8 @@ public class HomeActivity extends AppCompatActivity {
     private EditText etInvitationCode;
 
     private String currentUserIdPostgres = null; // Aquí guardaremos el UUID real
+    private final Handler linkPollingHandler = new Handler(Looper.getMainLooper());
+    private Runnable linkPollingRunnable;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -60,13 +67,14 @@ public class HomeActivity extends AppCompatActivity {
             @Override
             public void onResponse(Call<UserResponse> call, Response<UserResponse> response) {
                 if (response.isSuccessful() && response.body() != null) {
-                    currentUserIdPostgres = response.body().getId(); // Guardamos el UUID
-                    btnGenerateCode.setEnabled(true);
-                    btnLinkAccount.setEnabled(true);
-                    Toast.makeText(HomeActivity.this, "Conectado al Backend", Toast.LENGTH_SHORT).show();
-                } else {
-                    Toast.makeText(HomeActivity.this, "Error al obtener perfil", Toast.LENGTH_SHORT).show();
-                }
+                            currentUserIdPostgres = response.body().getId(); // Guardamos el UUID
+                            btnGenerateCode.setEnabled(true);
+                            btnLinkAccount.setEnabled(true);
+                            Toast.makeText(HomeActivity.this, "Conectado al Backend", Toast.LENGTH_SHORT).show();
+                            checkAndRouteIfAlreadyLinked();
+                        } else {
+                            Toast.makeText(HomeActivity.this, "Error al obtener perfil", Toast.LENGTH_SHORT).show();
+                        }
             }
 
             @Override
@@ -85,6 +93,7 @@ public class HomeActivity extends AppCompatActivity {
                 if (response.isSuccessful() && response.body() != null) {
                     tvGeneratedCode.setText(response.body().getToken());
                     Toast.makeText(HomeActivity.this, "Código generado", Toast.LENGTH_SHORT).show();
+                    startLinkPolling();
                 } else {
                     Toast.makeText(HomeActivity.this, "Error al generar código", Toast.LENGTH_SHORT).show();
                 }
@@ -111,13 +120,7 @@ public class HomeActivity extends AppCompatActivity {
             public void onResponse(Call<Object> call, Response<Object> response) {
                 if (response.isSuccessful()) {
                     Toast.makeText(HomeActivity.this, "¡Código aceptado! Configurando seguridad...", Toast.LENGTH_SHORT).show();
-
-                    // ¡EL CAMBIO FLUIDO!
-                    // Regresamos al Enrutador (MainActivity) para que detecte que estamos PENDING
-                    // y nos mande automáticamente a la pantalla de Verificación del PIN.
-                    Intent intent = new Intent(HomeActivity.this, MainActivity.class);
-                    startActivity(intent);
-                    finish(); // Cerramos esta pantalla para que no pueda volver atrás
+                    routeProtectedToVerificationOrDashboard();
 
                 } else {
                     Toast.makeText(HomeActivity.this, "Código inválido o expirado", Toast.LENGTH_SHORT).show();
@@ -129,5 +132,116 @@ public class HomeActivity extends AppCompatActivity {
                 Toast.makeText(HomeActivity.this, "Error de red", Toast.LENGTH_SHORT).show();
             }
         });
+    }
+
+    private void routeProtectedToVerificationOrDashboard() {
+        RetrofitClient.getApiService().getMyLinks(currentUserIdPostgres).enqueue(new Callback<List<LinkResponse>>() {
+            @Override
+            public void onResponse(Call<List<LinkResponse>> call, Response<List<LinkResponse>> response) {
+                if (response.isSuccessful() && response.body() != null) {
+                    for (LinkResponse link : response.body()) {
+                        if (currentUserIdPostgres.equals(link.getProtectedUserId())) {
+                            Intent intent;
+                            if ("ACTIVE".equals(link.getStatus())) {
+                                intent = new Intent(HomeActivity.this, ProtectedDashboardActivity.class);
+                            } else {
+                                intent = new Intent(HomeActivity.this, VerificationActivity.class);
+                            }
+                            intent.putExtra("PROTECTED_ID", currentUserIdPostgres);
+                            intent.putExtra("LINK_ID", link.getId());
+                            startActivity(intent);
+                            finish();
+                            return;
+                        }
+                    }
+                }
+
+                Intent fallback = new Intent(HomeActivity.this, MainActivity.class);
+                startActivity(fallback);
+                finish();
+            }
+
+            @Override
+            public void onFailure(Call<List<LinkResponse>> call, Throwable t) {
+                Intent fallback = new Intent(HomeActivity.this, MainActivity.class);
+                startActivity(fallback);
+                finish();
+            }
+        });
+    }
+
+    private void startLinkPolling() {
+        stopLinkPolling();
+        linkPollingRunnable = new Runnable() {
+            @Override
+            public void run() {
+                if (currentUserIdPostgres == null) {
+                    return;
+                }
+                RetrofitClient.getApiService().getMyLinks(currentUserIdPostgres).enqueue(new Callback<List<LinkResponse>>() {
+                    @Override
+                    public void onResponse(Call<List<LinkResponse>> call, Response<List<LinkResponse>> response) {
+                        if (response.isSuccessful() && response.body() != null) {
+                            for (LinkResponse link : response.body()) {
+                                if (currentUserIdPostgres.equals(link.getHostId()) &&
+                                        ("PENDING".equals(link.getStatus()) || "ACTIVE".equals(link.getStatus()))) {
+                                    stopLinkPolling();
+                                    Intent intent = new Intent(HomeActivity.this, HostDashboardActivity.class);
+                                    intent.putExtra("HOST_ID", currentUserIdPostgres);
+                                    startActivity(intent);
+                                    finish();
+                                    return;
+                                }
+                            }
+                        }
+                    }
+
+                    @Override
+                    public void onFailure(Call<List<LinkResponse>> call, Throwable t) {
+                    }
+                });
+                linkPollingHandler.postDelayed(this, 3000);
+            }
+        };
+        linkPollingHandler.post(linkPollingRunnable);
+    }
+
+    private void stopLinkPolling() {
+        if (linkPollingRunnable != null) {
+            linkPollingHandler.removeCallbacks(linkPollingRunnable);
+        }
+    }
+
+    private void checkAndRouteIfAlreadyLinked() {
+        if (currentUserIdPostgres == null) {
+            return;
+        }
+        RetrofitClient.getApiService().getMyLinks(currentUserIdPostgres).enqueue(new Callback<List<LinkResponse>>() {
+            @Override
+            public void onResponse(Call<List<LinkResponse>> call, Response<List<LinkResponse>> response) {
+                if (response.isSuccessful() && response.body() != null) {
+                    for (LinkResponse link : response.body()) {
+                        if (currentUserIdPostgres.equals(link.getHostId()) &&
+                                ("PENDING".equals(link.getStatus()) || "ACTIVE".equals(link.getStatus()))) {
+                            Intent intent = new Intent(HomeActivity.this, HostDashboardActivity.class);
+                            intent.putExtra("HOST_ID", currentUserIdPostgres);
+                            startActivity(intent);
+                            finish();
+                            return;
+                        }
+                    }
+                }
+            }
+
+            @Override
+            public void onFailure(Call<List<LinkResponse>> call, Throwable t) {
+            }
+        });
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        stopLinkPolling();
     }
 }

@@ -1,10 +1,14 @@
 package com.guardianapp.mobile;
 
 import android.content.Intent;
+import android.content.pm.PackageManager;
+import android.os.Build;
 import android.os.Bundle;
 import android.widget.Button;
 import android.widget.TextView;
 import android.widget.Toast;
+import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
 import androidx.appcompat.app.AppCompatActivity;
 import com.google.android.material.textfield.TextInputEditText;
 
@@ -14,6 +18,7 @@ import com.google.firebase.auth.FirebaseUser;
 
 // Importar Retrofit y nuestros DTOs
 import com.guardianapp.mobile.api.LinkResponse;
+import com.guardianapp.mobile.api.NotificationRegistrar;
 import com.guardianapp.mobile.api.RetrofitClient;
 import com.guardianapp.mobile.api.UserResponse;
 
@@ -24,6 +29,8 @@ import retrofit2.Callback;
 import retrofit2.Response;
 
 public class MainActivity extends AppCompatActivity {
+
+    private static final int REQ_NOTIFICATIONS = 1001;
 
     private TextInputEditText etEmail;
     private TextInputEditText etPassword;
@@ -37,6 +44,8 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+        requestNotificationPermissionIfNeeded();
 
         // Inicializar Firebase Auth
         mAuth = FirebaseAuth.getInstance();
@@ -74,6 +83,7 @@ public class MainActivity extends AppCompatActivity {
                                 public void onResponse(Call<UserResponse> call, Response<UserResponse> response) {
                                     if (response.isSuccessful() && response.body() != null) {
                                         String postgresId = response.body().getId();
+                                        NotificationRegistrar.registerToken(postgresId);
 
                                         // 3. Preguntamos si tiene CUALQUIER vínculo
                                         RetrofitClient.getApiService().getMyLinks(postgresId).enqueue(new Callback<List<LinkResponse>>() {
@@ -140,5 +150,22 @@ public class MainActivity extends AppCompatActivity {
             Intent intent = new Intent(MainActivity.this, RegisterActivity.class);
             startActivity(intent);
         });
+    }
+
+    private void requestNotificationPermissionIfNeeded() {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) {
+            return;
+        }
+
+        if (ContextCompat.checkSelfPermission(this, android.Manifest.permission.POST_NOTIFICATIONS)
+                == PackageManager.PERMISSION_GRANTED) {
+            return;
+        }
+
+        ActivityCompat.requestPermissions(
+                this,
+                new String[]{android.Manifest.permission.POST_NOTIFICATIONS},
+                REQ_NOTIFICATIONS
+        );
     }
 }

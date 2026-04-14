@@ -47,6 +47,29 @@ public interface GuardianApiService {
     @PUT("api/v1/alerts/{id}/resolve")
     Call<AlertResponse> resolveAlert(@Path("id") String alertId, @Body ResolveAlertRequest request);
 
+    @POST("api/v1/identity-verifications")
+    Call<IdentityVerificationResponse> createIdentityVerification(@Body CreateIdentityVerificationRequest request);
+
+    @PUT("api/v1/identity-verifications/{id}/respond")
+    Call<IdentityVerificationResponse> respondIdentityVerification(
+            @Path("id") String verificationId,
+            @Body RespondIdentityVerificationRequest request
+    );
+
+    @GET("api/v1/identity-verifications/{id}")
+    Call<IdentityVerificationResponse> getIdentityVerification(@Path("id") String verificationId);
+
+    @GET("api/v1/identity-verifications/pending")
+    Call<List<IdentityVerificationResponse>> getPendingIdentityVerifications(
+            @Header("X-User-Id") String hostId
+    );
+
+    @POST("api/v1/notifications/token")
+    Call<Void> registerDeviceToken(
+            @Header("X-User-Id") String userId,
+            @Body RegisterDeviceTokenRequest request
+    );
+
     // El Protegido envía el PIN para activar el vínculo
     // El Protegido envía el código de 6 dígitos para activar el vínculo
     @POST("api/v1/links/{linkId}/confirm")

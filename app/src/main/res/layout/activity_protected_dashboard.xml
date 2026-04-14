@@ -48,6 +48,44 @@
         android:backgroundTint="@color/manto_green"
         android:layout_marginBottom="16dp"/>
 
+    <LinearLayout
+        android:id="@+id/layoutVerificationCodeInfo"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:background="#E8F5E9"
+        android:padding="12dp"
+        android:layout_marginBottom="16dp"
+        android:visibility="gone">
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Código de verificación familiar"
+            android:textStyle="bold"
+            android:textSize="14sp"
+            android:textColor="#1B5E20"/>
+
+        <TextView
+            android:id="@+id/tvVerificationCodePersistent"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="------"
+            android:textSize="28sp"
+            android:textStyle="bold"
+            android:layout_marginTop="6dp"
+            android:textColor="#2E7D32"/>
+
+        <TextView
+            android:id="@+id/tvVerificationCodeStatus"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Esperando respuesta de tu familiar"
+            android:textSize="13sp"
+            android:textColor="#33691E"
+            android:layout_marginTop="4dp"/>
+    </LinearLayout>
+
     <Button
         android:id="@+id/btnSimulateThreat"
         android:layout_width="match_parent"
