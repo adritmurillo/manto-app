@@ -10,6 +10,7 @@ import android.util.Log;
 import androidx.core.app.NotificationCompat;
 import androidx.core.app.NotificationManagerCompat;
 
+
 import com.guardianapp.mobile.MainActivity;
 import com.guardianapp.mobile.R;
 import com.google.firebase.messaging.FirebaseMessagingService;
@@ -69,8 +70,16 @@ public class GuardianFirebaseMessagingService extends FirebaseMessagingService {
                 .setAutoCancel(true)
                 .setContentIntent(pendingIntent);
 
-        NotificationManagerCompat.from(this)
-                .notify((int) System.currentTimeMillis(), builder.build());
+        // On Android 13+ POST_NOTIFICATIONS is runtime permission.
+        // FCM delivery can happen even when the app can't show notifications.
+        // In that case, we just skip displaying to avoid SecurityException.
+        try {
+            //noinspection MissingPermission
+            NotificationManagerCompat.from(this)
+                    .notify((int) System.currentTimeMillis(), builder.build());
+        } catch (SecurityException se) {
+            Log.w(TAG, "Missing notification permission; skipping notification", se);
+        }
     }
 
     private void createNotificationChannelIfNeeded() {

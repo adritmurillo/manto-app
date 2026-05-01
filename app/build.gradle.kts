@@ -18,6 +18,10 @@ android {
         versionCode = 1
         versionName = "1.0"
 
+        // Placeholder for Android App Links host.
+        // Custom scheme links (manto://invite/<TOKEN>) work without any domain.
+        manifestPlaceholders["INVITE_LINK_HOST"] = "example.invalid"
+
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 

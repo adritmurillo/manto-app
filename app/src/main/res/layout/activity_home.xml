@@ -8,6 +8,16 @@
     android:background="@color/manto_background">
 
     <TextView
+        android:id="@+id/tvLogoutHome"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="end"
+        android:text="Cerrar sesion"
+        android:textColor="@color/manto_green"
+        android:textStyle="bold"
+        android:padding="8dp" />
+
+    <TextView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:text="Bienvenido a Manto"
@@ -63,6 +73,15 @@
                 android:layout_marginTop="16dp"
                 android:textColor="@android:color/black"/>
 
+            <Button
+                android:id="@+id/btnShareInviteLink"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Compartir Link"
+                android:enabled="false"
+                android:layout_marginTop="12dp"
+                android:backgroundTint="@color/manto_green"/>
+
         </LinearLayout>
     </com.google.android.material.card.MaterialCardView>
 
@@ -98,7 +117,7 @@
                 android:id="@+id/etInvitationCode"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:hint="Ej: A4B92X"
+                android:hint="Ej: A4B92X (vinculo) o token familia"
                 android:maxLength="8"
                 android:textAllCaps="true"
                 android:textAlignment="center"

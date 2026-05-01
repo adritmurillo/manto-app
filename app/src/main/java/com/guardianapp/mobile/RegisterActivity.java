@@ -19,6 +19,8 @@ import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
 
+import com.guardianapp.mobile.invite.PendingInviteStore;
+
 public class RegisterActivity extends AppCompatActivity {
 
     // UI Elements
@@ -92,7 +94,13 @@ public class RegisterActivity extends AppCompatActivity {
                                                 // ¡Spring Boot respondió 201 CREATED!
                                                 Toast.makeText(RegisterActivity.this, "Success! User saved in Manto Database", Toast.LENGTH_LONG).show();
 
-                                                // Aquí cerramos la pantalla de registro y devolvemos al usuario al Login
+                                                // If the user came from an invite link, go straight back to Login to continue.
+                                                // MainActivity will auto-continue using the stored token.
+                                                if (PendingInviteStore.peek(RegisterActivity.this) != null) {
+                                                    finish();
+                                                    return;
+                                                }
+
                                                 finish();
                                             } else {
                                                 Toast.makeText(RegisterActivity.this, "API Error: " + response.code(), Toast.LENGTH_LONG).show();

@@ -138,6 +138,14 @@
         android:text="Actualizar Estado"
         android:backgroundTint="#4CAF50"/>
 
+    <Button
+        android:id="@+id/btnFamilyCircle"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Gestionar circulo familiar"
+        android:layout_marginTop="10dp"
+        android:backgroundTint="#2E7D32"/>
+
     <Space
         android:layout_width="match_parent"
         android:layout_height="0dp"

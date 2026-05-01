@@ -67,12 +67,8 @@ public class VerificationActivity extends AppCompatActivity {
                 if (response.isSuccessful() && response.body() != null) {
                     Toast.makeText(VerificationActivity.this, "¡Protección Activada Oficialmente!", Toast.LENGTH_SHORT).show();
 
-                    // 4. ¡LA MAGIA DEL FLUJO! Como el PIN fue correcto (ahora somos ACTIVE),
-                    // viajamos directamente al Dashboard final del Abuelo.
-                    Intent intent = new Intent(VerificationActivity.this, ProtectedDashboardActivity.class);
-                    intent.putExtra("PROTECTED_ID", miIdProtegido);
-                    intent.putExtra("LINK_ID", idDelVinculo);
-                    startActivity(intent);
+                    // Route based on the user's family role.
+                    routeAfterActivation();
                     finish(); // Matamos esta pantalla para que no pueda volver atrás
 
                 } else {
@@ -92,5 +88,47 @@ public class VerificationActivity extends AppCompatActivity {
     private void resetButton() {
         btnVerifyPin.setEnabled(true);
         btnVerifyPin.setText("Verificar PIN");
+    }
+
+    private void routeAfterActivation() {
+        // If the user is a host (primary or secondary) in any family group, go to Host dashboard.
+        // Otherwise, it's a protected user.
+        RetrofitClient.getApiService().getMyFamilyGroups(miIdProtegido).enqueue(new Callback<java.util.List<com.guardianapp.mobile.api.FamilyGroupResponse>>() {
+            @Override
+            public void onResponse(Call<java.util.List<com.guardianapp.mobile.api.FamilyGroupResponse>> call, Response<java.util.List<com.guardianapp.mobile.api.FamilyGroupResponse>> response) {
+                boolean isHost = false;
+                if (response.isSuccessful() && response.body() != null) {
+                    for (com.guardianapp.mobile.api.FamilyGroupResponse g : response.body()) {
+                        if (g == null || g.getMembers() == null) continue;
+                        for (com.guardianapp.mobile.api.FamilyGroupResponse.MemberResponse m : g.getMembers()) {
+                            if (m != null && miIdProtegido.equals(m.getUserId()) && ("PRIMARY_HOST".equals(m.getRole()) || "SECONDARY_HOST".equals(m.getRole()))) {
+                                isHost = true;
+                                break;
+                            }
+                        }
+                        if (isHost) break;
+                    }
+                }
+
+                Intent intent;
+                if (isHost) {
+                    intent = new Intent(VerificationActivity.this, HostDashboardActivity.class);
+                    intent.putExtra("HOST_ID", miIdProtegido);
+                } else {
+                    intent = new Intent(VerificationActivity.this, ProtectedDashboardActivity.class);
+                    intent.putExtra("PROTECTED_ID", miIdProtegido);
+                    intent.putExtra("LINK_ID", idDelVinculo);
+                }
+                startActivity(intent);
+            }
+
+            @Override
+            public void onFailure(Call<java.util.List<com.guardianapp.mobile.api.FamilyGroupResponse>> call, Throwable t) {
+                Intent intent = new Intent(VerificationActivity.this, ProtectedDashboardActivity.class);
+                intent.putExtra("PROTECTED_ID", miIdProtegido);
+                intent.putExtra("LINK_ID", idDelVinculo);
+                startActivity(intent);
+            }
+        });
     }
 }
