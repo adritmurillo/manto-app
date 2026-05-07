@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:padding="20dp">
+
+    <TextView
+        android:id="@+id/tvEmergencyTitle"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="🚨 EMERGENCIA ACTIVA"
+        android:textStyle="bold"
+        android:textSize="20sp"
+        android:layout_marginBottom="8dp" />
+
+    <TextView
+        android:id="@+id/tvEmergencyMessage"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:textColor="#424242"
+        android:layout_marginBottom="16dp" />
+
+    <Button
+        android:id="@+id/btnEmergencyMap"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Ver en Google Maps"
+        android:backgroundTint="#1976D2"
+        android:textColor="@android:color/white"
+        android:layout_marginBottom="12dp" />
+
+    <Button
+        android:id="@+id/btnEmergencyFalseAlarm"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Falsa alarma"
+        android:backgroundTint="#F57C00"
+        android:textColor="@android:color/white"
+        android:layout_marginBottom="8dp" />
+
+    <Button
+        android:id="@+id/btnEmergencyAllSafe"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Todo bien"
+        android:backgroundTint="#388E3C"
+        android:textColor="@android:color/white"
+        android:layout_marginBottom="8dp" />
+
+    <Button
+        android:id="@+id/btnEmergencyPolice"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Policia enviada"
+        android:backgroundTint="#C62828"
+        android:textColor="@android:color/white"
+        android:layout_marginBottom="8dp" />
+
+    <Button
+        android:id="@+id/btnEmergencyClose"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Cerrar"
+        android:backgroundTint="#9E9E9E"
+        android:textColor="@android:color/white" />
+
+</LinearLayout>

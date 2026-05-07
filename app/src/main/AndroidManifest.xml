@@ -7,6 +7,8 @@
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
     <uses-permission android:name="android.permission.RECORD_AUDIO" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK" />
 
     <application
         android:allowBackup="true"
@@ -20,32 +22,36 @@
         android:usesCleartextTraffic="true"
         tools:targetApi="31">
         <activity
-            android:name=".VerificationActivity"
+            android:name=".ui.auth.VerificationActivity"
             android:exported="false" />
         <activity
-            android:name=".SecureBrowserActivity"
+            android:name=".ui.protecteduser.SecureBrowserActivity"
             android:exported="false" />
         <activity
-            android:name=".HostDashboardActivity"
+            android:name=".ui.host.HostDashboardActivity"
             android:exported="false" />
         <activity
-            android:name=".FamilyCircleActivity"
+            android:name=".ui.host.FamilyCircleActivity"
             android:exported="false" />
         <service
-            android:name=".notifications.GuardianFirebaseMessagingService"
+            android:name=".data.notifications.GuardianFirebaseMessagingService"
             android:exported="false">
             <intent-filter>
                 <action android:name="com.google.firebase.MESSAGING_EVENT" />
             </intent-filter>
         </service>
+        <service
+            android:name=".service.EmergencyLiveAudioService"
+            android:exported="false"
+            android:foregroundServiceType="mediaPlayback" />
         <activity
-            android:name=".ProtectedDashboardActivity"
+            android:name=".ui.protecteduser.ProtectedDashboardActivity"
             android:exported="false" />
         <activity
-            android:name=".HomeActivity"
+            android:name=".ui.main.HomeActivity"
             android:exported="false" />
         <activity
-            android:name=".MainActivity"
+            android:name=".ui.main.MainActivity"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -54,7 +60,7 @@
             </intent-filter>
         </activity>
         <activity
-            android:name=".InviteEntryActivity"
+            android:name=".ui.invite.InviteEntryActivity"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.VIEW" />
@@ -79,7 +85,7 @@
                     android:pathPrefix="/i/" />
             </intent-filter>
         </activity>
-        <activity android:name=".RegisterActivity" />
+        <activity android:name=".ui.auth.RegisterActivity" />
     </application>
 
 </manifest>

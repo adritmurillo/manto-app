@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:background="#FFFFFF"
+    android:padding="16dp"
+    android:layout_marginBottom="12dp">
+
+    <TextView
+        android:id="@+id/tvEmergencyHistoryTitle"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:textStyle="bold"
+        android:textSize="16sp"
+        android:textColor="#212121"
+        android:layout_marginBottom="2dp" />
+
+    <TextView
+        android:id="@+id/tvEmergencyHistoryProtectedName"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:textColor="#455A64"
+        android:textSize="13sp"
+        android:layout_marginBottom="4dp" />
+
+    <TextView
+        android:id="@+id/tvEmergencyHistoryTimestamp"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:textColor="#757575"
+        android:textSize="12sp"
+        android:layout_marginBottom="6dp" />
+
+    <TextView
+        android:id="@+id/tvEmergencyHistoryLocation"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:textColor="#616161"
+        android:layout_marginBottom="6dp" />
+
+    <TextView
+        android:id="@+id/tvEmergencyHistorySummary"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:textColor="#455A64"
+        android:textSize="13sp"
+        android:layout_marginBottom="8dp" />
+
+    <Button
+        android:id="@+id/btnEmergencyHistoryMap"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Ver en Google Maps"
+        android:backgroundTint="#1E88E5"
+        android:textColor="@android:color/white"
+        android:layout_marginBottom="8dp" />
+
+    <Button
+        android:id="@+id/btnEmergencyHistoryAudio"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Reproducir audio"
+        android:backgroundTint="#546E7A"
+        android:textColor="@android:color/white" />
+
+</LinearLayout>
