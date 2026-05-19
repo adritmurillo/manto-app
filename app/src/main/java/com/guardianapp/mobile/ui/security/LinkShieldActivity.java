@@ -2,30 +2,34 @@ package com.guardianapp.mobile.ui.security;
 
 import android.content.Intent;
 import android.os.Bundle;
+import android.util.Patterns;
+import android.widget.Button;
+import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.recyclerview.widget.LinearLayoutManager;
-import androidx.recyclerview.widget.RecyclerView;
 
+import com.google.android.material.bottomnavigation.BottomNavigationView;
 import com.guardianapp.mobile.R;
+import com.guardianapp.mobile.data.api.AnalyzeSingleUrlResponse;
+import com.guardianapp.mobile.data.api.RegisterBlacklistUrlResponse;
+import com.guardianapp.mobile.data.security.LinkShieldRepository;
 import com.guardianapp.mobile.ui.host.FamilyCircleActivity;
 import com.guardianapp.mobile.ui.host.HostDashboardActivity;
-import com.google.android.material.bottomnavigation.BottomNavigationView;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Locale;
 
 public class LinkShieldActivity extends AppCompatActivity {
 
-    private final LinkShieldAdapter adapter = new LinkShieldAdapter();
+    private final LinkShieldRepository repository = new LinkShieldRepository();
+
     private String hostId;
-    private TextView tvBlockedCount;
-    private TextView tvPhishingCount;
-    private TextView tvMalwareCount;
-    private TextView tvSafeCount;
+    private EditText etAnalyzeUrl;
+    private EditText etBlacklistUrl;
+    private TextView tvAnalysisResult;
+    private Button btnAnalyzeLink;
+    private Button btnBlockDomain;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -33,92 +37,178 @@ public class LinkShieldActivity extends AppCompatActivity {
         setContentView(R.layout.activity_link_shield);
         hostId = getIntent() != null ? getIntent().getStringExtra("HOST_ID") : null;
 
-        tvBlockedCount = findViewById(R.id.tvShieldBlockedCount);
-        tvPhishingCount = findViewById(R.id.tvShieldPhishingCount);
-        tvMalwareCount = findViewById(R.id.tvShieldMalwareCount);
-        tvSafeCount = findViewById(R.id.tvShieldSafeCount);
-
-        RecyclerView rv = findViewById(R.id.rvLinkShield);
-        rv.setLayoutManager(new LinearLayoutManager(this));
-        rv.setAdapter(adapter);
+        etAnalyzeUrl = findViewById(R.id.etAnalyzeUrl);
+        etBlacklistUrl = findViewById(R.id.etBlacklistUrl);
+        tvAnalysisResult = findViewById(R.id.tvAnalysisResult);
+        btnAnalyzeLink = findViewById(R.id.btnAnalyzeLink);
+        btnBlockDomain = findViewById(R.id.btnBlockDomain);
 
         findViewById(R.id.btnBackShield).setOnClickListener(v -> finish());
+        btnAnalyzeLink.setOnClickListener(v -> analyzeUrl());
+        btnBlockDomain.setOnClickListener(v -> blockDomain());
 
+        setupBottomNavigation();
+    }
+
+    private void setupBottomNavigation() {
         BottomNavigationView bottomNav = findViewById(R.id.bottomNavLinkShield);
-        if (bottomNav != null) {
-            bottomNav.setSelectedItemId(R.id.nav_security);
-            bottomNav.setOnItemSelectedListener(item -> {
-                int id = item.getItemId();
-                if (id == R.id.nav_security) {
-                    return true;
-                }
-                if (id == R.id.nav_home) {
-                    Intent intent = new Intent(this, HostDashboardActivity.class);
-                    intent.putExtra("HOST_ID", hostId);
-                    startActivity(intent);
-                    return true;
-                }
-                if (id == R.id.nav_family) {
-                    if (hostId == null || hostId.isBlank()) {
-                        Toast.makeText(this, "Host ID no disponible", Toast.LENGTH_SHORT).show();
-                        return true;
-                    }
-                    Intent intent = new Intent(this, FamilyCircleActivity.class);
-                    intent.putExtra("HOST_ID", hostId);
-                    startActivity(intent);
-                    return true;
-                }
-                if (id == R.id.nav_settings) {
-                    Toast.makeText(this, "Ajustes aun no disponible", Toast.LENGTH_SHORT).show();
-                    return true;
-                }
-                return false;
-            });
+        if (bottomNav == null) {
+            return;
         }
+        bottomNav.setSelectedItemId(R.id.nav_security);
+        bottomNav.setOnItemSelectedListener(item -> {
+            int id = item.getItemId();
+            if (id == R.id.nav_security) {
+                return true;
+            }
+            if (id == R.id.nav_home) {
+                Intent intent = new Intent(this, HostDashboardActivity.class);
+                intent.putExtra("HOST_ID", hostId);
+                startActivity(intent);
+                return true;
+            }
+            if (id == R.id.nav_family) {
+                if (hostId == null || hostId.isBlank()) {
+                    Toast.makeText(this, "Host ID no disponible", Toast.LENGTH_SHORT).show();
+                    return true;
+                }
+                Intent intent = new Intent(this, FamilyCircleActivity.class);
+                intent.putExtra("HOST_ID", hostId);
+                startActivity(intent);
+                return true;
+            }
+            if (id == R.id.nav_settings) {
+                Toast.makeText(this, "Ajustes aun no disponible", Toast.LENGTH_SHORT).show();
+                return true;
+            }
+            return false;
+        });
     }
 
-    @Override
-    protected void onResume() {
-        super.onResume();
-        refreshContent();
-    }
-
-    private void refreshContent() {
-        List<SecurityAnalysisItem> source = SecurityAnalysisStore.getAll();
-        List<SecurityAnalysisItem> linkItems = new ArrayList<>();
-        int phishing = 0;
-        int malware = 0;
-        int safe = 0;
-
-        for (SecurityAnalysisItem item : source) {
-            if (!SecurityAnalysisItem.CHANNEL_SMS.equals(item.getChannel())
-                    && !SecurityAnalysisItem.CHANNEL_LINK.equals(item.getChannel())) {
-                continue;
-            }
-
-            if (item.getUrl() == null || item.getUrl().isBlank()) {
-                continue;
-            }
-
-            linkItems.add(item);
-            String status = normalize(item.getStatus());
-            if ("PHISHING".equals(status)) {
-                phishing++;
-            } else if ("MALWARE".equals(status)) {
-                malware++;
-            } else if ("SAFE".equals(status) || item.isWhitelisted()) {
-                safe++;
-            }
+    private void analyzeUrl() {
+        String normalizedUrl = normalizeUrl(etAnalyzeUrl.getText().toString());
+        if (normalizedUrl == null) {
+            Toast.makeText(this, "Ingresa una URL valida", Toast.LENGTH_SHORT).show();
+            return;
         }
 
-        adapter.setItems(linkItems);
-        tvBlockedCount.setText(String.valueOf(SecurityAnalysisStore.countBlockedLinksCurrentMonth()));
-        tvPhishingCount.setText(phishing + " Phishing");
-        tvMalwareCount.setText(malware + " Malware");
-        tvSafeCount.setText(safe + " Safe");
+        setAnalyzeLoading(true);
+        repository.analyzeUrl(normalizedUrl, new LinkShieldRepository.ResultCallback<AnalyzeSingleUrlResponse>() {
+            @Override
+            public void onSuccess(AnalyzeSingleUrlResponse data) {
+                setAnalyzeLoading(false);
+                String status = normalizeStatus(data.getStatus());
+                String reason = data.getReason() == null || data.getReason().isBlank()
+                        ? "Sin detalle del analisis."
+                        : data.getReason();
+                boolean blocked = isBlockedStatus(status);
+
+                SecurityAnalysisStore.add(new SecurityAnalysisItem(
+                        System.currentTimeMillis(),
+                        SecurityAnalysisItem.CHANNEL_LINK,
+                        "manual-input",
+                        "Analisis manual de URL",
+                        data.getUrl() != null ? data.getUrl() : normalizedUrl,
+                        status,
+                        reason,
+                        blocked,
+                        data.isWhitelisted(),
+                        data.getTrustedProvider()
+                ));
+
+                etAnalyzeUrl.setText(data.getUrl() != null ? data.getUrl() : normalizedUrl);
+                if (etBlacklistUrl.getText().toString().isBlank()) {
+                    etBlacklistUrl.setText(data.getUrl() != null ? data.getUrl() : normalizedUrl);
+                }
+                tvAnalysisResult.setText("Estado: " + status + "\n" + reason);
+                Toast.makeText(
+                        LinkShieldActivity.this,
+                        blocked ? "Riesgo detectado. Puedes bloquear el dominio." : "URL segura.",
+                        Toast.LENGTH_SHORT
+                ).show();
+            }
+
+            @Override
+            public void onError(Throwable error) {
+                setAnalyzeLoading(false);
+                tvAnalysisResult.setText("No se pudo analizar la URL.");
+                Toast.makeText(LinkShieldActivity.this, "Error: " + error.getMessage(), Toast.LENGTH_LONG).show();
+            }
+        });
     }
 
-    private String normalize(String value) {
-        return value == null ? "" : value.trim().toUpperCase(Locale.ROOT);
+    private void blockDomain() {
+        String normalizedUrl = normalizeUrl(etBlacklistUrl.getText().toString());
+        if (normalizedUrl == null) {
+            Toast.makeText(this, "Ingresa una URL valida para bloquear", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        setBlockLoading(true);
+        repository.registerBlacklistUrl(normalizedUrl, new LinkShieldRepository.ResultCallback<RegisterBlacklistUrlResponse>() {
+            @Override
+            public void onSuccess(RegisterBlacklistUrlResponse data) {
+                setBlockLoading(false);
+                SecurityAnalysisStore.add(new SecurityAnalysisItem(
+                        System.currentTimeMillis(),
+                        SecurityAnalysisItem.CHANNEL_LINK,
+                        "manual-blacklist",
+                        "Bloqueo manual en lista negra",
+                        data.getUrl() != null ? data.getUrl() : normalizedUrl,
+                        "BLACKLISTED",
+                        "Dominio agregado a lista negra",
+                        true,
+                        false,
+                        null
+                ));
+                tvAnalysisResult.setText("Dominio bloqueado en lista negra:\n" + (data.getUrl() != null ? data.getUrl() : normalizedUrl));
+                Toast.makeText(LinkShieldActivity.this, "Dominio bloqueado correctamente", Toast.LENGTH_SHORT).show();
+            }
+
+            @Override
+            public void onError(Throwable error) {
+                setBlockLoading(false);
+                Toast.makeText(LinkShieldActivity.this, "No se pudo bloquear: " + error.getMessage(), Toast.LENGTH_LONG).show();
+            }
+        });
+    }
+
+    private String normalizeUrl(String raw) {
+        if (raw == null) {
+            return null;
+        }
+        String value = raw.trim();
+        if (value.isBlank()) {
+            return null;
+        }
+        if (!value.startsWith("http://") && !value.startsWith("https://")) {
+            value = "https://" + value;
+        }
+        if (!Patterns.WEB_URL.matcher(value).matches()) {
+            return null;
+        }
+        return value;
+    }
+
+    private String normalizeStatus(String status) {
+        return status == null ? "UNKNOWN" : status.trim().toUpperCase(Locale.ROOT);
+    }
+
+    private boolean isBlockedStatus(String status) {
+        return "PHISHING".equals(status)
+                || "MALWARE".equals(status)
+                || "UNWANTED".equals(status)
+                || "SUSPICIOUS".equals(status)
+                || "ERROR".equals(status);
+    }
+
+    private void setAnalyzeLoading(boolean loading) {
+        btnAnalyzeLink.setEnabled(!loading);
+        btnAnalyzeLink.setText(loading ? "Analizando..." : "Analizar Link");
+    }
+
+    private void setBlockLoading(boolean loading) {
+        btnBlockDomain.setEnabled(!loading);
+        btnBlockDomain.setText(loading ? "Bloqueando..." : "Bloquear Dominio");
     }
 }

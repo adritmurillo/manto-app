@@ -27,6 +27,12 @@ public interface GuardianApiService {
     @POST("api/v1/threats/analyze")
     Call<ThreatAnalysisResponse> analyzeThreat(@Body AnalyzeThreatRequest request);
 
+    @POST("api/v1/threats/url/analyze")
+    Call<AnalyzeSingleUrlResponse> analyzeSingleUrl(@Body AnalyzeSingleUrlRequest request);
+
+    @POST("api/v1/blacklist/urls")
+    Call<RegisterBlacklistUrlResponse> registerBlacklistUrl(@Body RegisterBlacklistUrlRequest request);
+
 
     // Registro (El que ya tenías)
     @POST("api/v1/users")
