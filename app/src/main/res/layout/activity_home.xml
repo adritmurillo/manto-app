@@ -139,5 +139,14 @@
         </LinearLayout>
     </com.google.android.material.card.MaterialCardView>
 
+    <Button
+        android:id="@+id/btnSkipForNow"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="16dp"
+        android:text="OMITIR POR AHORA"
+        android:backgroundTint="#B0BEC5"
+        android:textColor="@android:color/black" />
+
     </LinearLayout>
 </ScrollView>

@@ -99,7 +99,16 @@
         style="@style/Widget.MaterialComponents.Button.OutlinedButton"
         android:textColor="@android:color/holo_orange_dark"
         app:strokeColor="@android:color/holo_orange_dark"
-        android:layout_marginBottom="32dp"/>
+        android:layout_marginBottom="12dp"/>
+
+    <Button
+        android:id="@+id/btnOpenSecurityMirrorProtected"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Abrir Espejo de Seguridad"
+        android:backgroundTint="@color/manto_green"
+        android:textColor="@android:color/white"
+        android:layout_marginBottom="24dp"/>
 
         <Space
             android:layout_width="match_parent"

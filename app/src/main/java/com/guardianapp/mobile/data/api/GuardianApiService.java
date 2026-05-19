@@ -1,5 +1,8 @@
 package com.guardianapp.mobile.data.api;
 
+import com.guardianapp.mobile.data.threat.AnalyzeThreatRequest;
+import com.guardianapp.mobile.data.threat.ThreatAnalysisResponse;
+
 import java.util.List;
 
 import retrofit2.Call;
@@ -20,6 +23,10 @@ import okhttp3.RequestBody;
 import java.util.Map;
 
 public interface GuardianApiService {
+
+    @POST("api/v1/threats/analyze")
+    Call<ThreatAnalysisResponse> analyzeThreat(@Body AnalyzeThreatRequest request);
+
 
     // Registro (El que ya tenías)
     @POST("api/v1/users")
@@ -86,6 +93,18 @@ public interface GuardianApiService {
 
     @PUT("api/v1/alerts/{id}/resolve")
     Call<AlertResponse> resolveAlert(@Path("id") String alertId, @Body ResolveAlertRequest request);
+
+    @POST("api/v1/sms-threat-alerts")
+    Call<SmsThreatAlertResponse> createSmsThreatAlert(@Body CreateSmsThreatAlertRequest request);
+
+    @GET("api/v1/sms-threat-alerts/pending")
+    Call<List<SmsThreatAlertResponse>> getPendingSmsThreatAlerts(@Header("X-User-Id") String hostId);
+
+    @PUT("api/v1/sms-threat-alerts/{id}/resolve")
+    Call<SmsThreatAlertResponse> resolveSmsThreatAlert(
+            @Path("id") String alertId,
+            @Body ResolveSmsThreatAlertRequest request
+    );
 
     @POST("api/v1/emergencies")
     Call<EmergencyAlertResponse> triggerEmergency(@Body TriggerEmergencyAlertRequest request);

@@ -1,0 +1,227 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#F6F6F6"
+    android:orientation="vertical"
+    android:padding="14dp">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center_vertical"
+        android:orientation="horizontal">
+
+        <ImageButton
+            android:id="@+id/btnBackMirror"
+            android:layout_width="36dp"
+            android:layout_height="36dp"
+            android:background="@android:color/transparent"
+            android:src="@android:drawable/ic_media_previous"
+            android:contentDescription="Volver" />
+
+        <TextView
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:gravity="center"
+            android:text="Espejo de seguridad"
+            android:textColor="#127F73"
+            android:textSize="24sp"
+            android:textStyle="bold" />
+    </LinearLayout>
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="14dp"
+        android:text="SMS Sospechoso"
+        android:textColor="#101010"
+        android:textSize="32sp"
+        android:textStyle="bold" />
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="4dp"
+        android:text="Detectado por el Espejo de Seguridad en tiempo real"
+        android:textColor="#4C4C4C"
+        android:textSize="13sp" />
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="12dp"
+        android:background="@drawable/bg_security_surface"
+        android:orientation="vertical"
+        android:padding="12dp">
+
+        <EditText
+            android:id="@+id/etMirrorSender"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="Remitente"
+            android:inputType="text"
+            android:textColor="#111111"
+            android:textColorHint="#6E6E6E"
+            android:textSize="14sp" />
+
+        <EditText
+            android:id="@+id/etMirrorMessage"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:hint="Contenido del mensaje"
+            android:inputType="textMultiLine"
+            android:maxLines="3"
+            android:textColor="#111111"
+            android:textColorHint="#6E6E6E"
+            android:textSize="14sp" />
+
+        <EditText
+            android:id="@+id/etMirrorUrl"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:hint="URL detectada"
+            android:inputType="textUri"
+            android:textColor="#111111"
+            android:textColorHint="#6E6E6E"
+            android:textSize="14sp" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="10dp"
+            android:orientation="horizontal">
+
+            <Button
+                android:id="@+id/btnAnalyzeCustom"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Analizar"
+                android:backgroundTint="#4F9E97"
+                android:textColor="@android:color/white" />
+
+            <Space
+                android:layout_width="8dp"
+                android:layout_height="1dp" />
+
+            <Button
+                android:id="@+id/btnGoShield"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Ver escudo"
+                android:backgroundTint="#D2E2DF"
+                android:textColor="#1D736B" />
+        </LinearLayout>
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:orientation="horizontal">
+
+        <Button
+            android:id="@+id/btnSimulatePhishing"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="Simular phishing"
+            android:backgroundTint="#F7CBCD"
+            android:textColor="#9E373A" />
+
+        <Space
+            android:layout_width="8dp"
+            android:layout_height="1dp" />
+
+        <Button
+            android:id="@+id/btnSimulateWhitelist"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="Simular whitelist"
+            android:backgroundTint="#CAE7DD"
+            android:textColor="#1D736B" />
+    </LinearLayout>
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="46dp"
+        android:layout_marginTop="10dp"
+        android:background="@drawable/bg_security_surface"
+        android:gravity="center_vertical"
+        android:paddingStart="16dp"
+        android:text="Buscar remitente o mensaje"
+        android:textColor="#8C9492"
+        android:textSize="14sp" />
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="10dp"
+        android:orientation="horizontal">
+
+        <Button
+            android:id="@+id/chipMirrorTodos"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:background="@drawable/bg_chip_safe"
+            android:text="TODOS"
+            android:textSize="11sp" />
+
+        <Space android:layout_width="6dp" android:layout_height="1dp" />
+
+        <Button
+            android:id="@+id/chipMirrorBloqueados"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:background="@drawable/bg_chip_neutral"
+            android:text="BLOQUEADOS"
+            android:textSize="11sp" />
+
+        <Space android:layout_width="6dp" android:layout_height="1dp" />
+
+        <Button
+            android:id="@+id/chipMirrorSospechosos"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:background="@drawable/bg_chip_neutral"
+            android:text="SOSPECHOSOS"
+            android:textSize="11sp" />
+    </LinearLayout>
+
+    <TextView
+        android:id="@+id/tvMirrorSectionTitle"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="10dp"
+        android:text="Bloqueados por seguridad"
+        android:textStyle="bold"
+        android:textColor="#141414" />
+
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/rvSecurityMirror"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:layout_marginTop="8dp"
+        android:nestedScrollingEnabled="false" />
+
+    <com.google.android.material.bottomnavigation.BottomNavigationView
+        android:id="@+id/bottomNavSecurityMirror"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="@android:color/white"
+        app:itemIconTint="@color/manto_green"
+        app:itemTextColor="@color/manto_green"
+        app:labelVisibilityMode="labeled"
+        app:menu="@menu/menu_host_bottom_nav" />
+</LinearLayout>

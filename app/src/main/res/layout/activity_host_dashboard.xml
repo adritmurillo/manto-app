@@ -1,10 +1,16 @@
 <?xml version="1.0" encoding="utf-8"?>
-<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:fillViewport="true"
+    android:orientation="vertical"
     android:background="#F5F5F5">
+
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:fillViewport="true">
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -207,6 +213,22 @@
         android:backgroundTint="#4CAF50"/>
 
     <Button
+        android:id="@+id/btnOpenLinkShieldDashboard"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Ver Escudo de Enlaces"
+        android:layout_marginTop="10dp"
+        android:backgroundTint="@color/manto_green"/>
+
+    <Button
+        android:id="@+id/btnOpenSecurityMirrorDashboard"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Ver Espejo de Seguridad"
+        android:layout_marginTop="10dp"
+        android:backgroundTint="#2F8473"/>
+
+    <Button
         android:id="@+id/btnFamilyCircle"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -228,4 +250,15 @@
             android:padding="16dp"
             android:textStyle="bold"/>
     </LinearLayout>
-</ScrollView>
+    </ScrollView>
+
+    <com.google.android.material.bottomnavigation.BottomNavigationView
+        android:id="@+id/bottomNavHost"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="@android:color/white"
+        app:itemIconTint="@color/manto_green"
+        app:itemTextColor="@color/manto_green"
+        app:labelVisibilityMode="labeled"
+        app:menu="@menu/menu_host_bottom_nav" />
+</LinearLayout>

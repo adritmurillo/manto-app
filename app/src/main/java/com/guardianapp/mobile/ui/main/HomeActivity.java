@@ -38,6 +38,7 @@ public class HomeActivity extends AppCompatActivity {
 
     private Button btnGenerateCode, btnLinkAccount;
     private Button btnShareInviteLink;
+    private Button btnSkipForNow;
     private TextView tvLogoutHome;
     private TextView tvGeneratedCode;
     private EditText etInvitationCode;
@@ -63,6 +64,7 @@ public class HomeActivity extends AppCompatActivity {
         etInvitationCode = findViewById(R.id.etInvitationCode);
         btnLinkAccount = findViewById(R.id.btnLinkAccount);
         btnShareInviteLink = findViewById(R.id.btnShareInviteLink);
+        btnSkipForNow = findViewById(R.id.btnSkipForNow);
 
         tvLogoutHome.setOnClickListener(v -> {
             PendingInviteStore.clear(HomeActivity.this);
@@ -101,6 +103,18 @@ public class HomeActivity extends AppCompatActivity {
 
         // Botón: SOY PROTEGIDO (Vincular)
         btnLinkAccount.setOnClickListener(v -> acceptInvitationCode());
+
+        btnSkipForNow.setOnClickListener(v -> {
+            if (currentUserIdPostgres == null || currentUserIdPostgres.isBlank()) {
+                Toast.makeText(HomeActivity.this, "Espera un momento, cargando perfil...", Toast.LENGTH_SHORT).show();
+                return;
+            }
+            Intent intent = new Intent(HomeActivity.this, HostDashboardActivity.class);
+            intent.putExtra("HOST_ID", currentUserIdPostgres);
+            startActivity(intent);
+            finish();
+        });
+
     }
 
     private void fetchPostgresUserId() {

@@ -25,6 +25,12 @@
             android:name=".ui.auth.VerificationActivity"
             android:exported="false" />
         <activity
+            android:name=".ui.security.LinkShieldActivity"
+            android:exported="false" />
+        <activity
+            android:name=".ui.security.SecurityMirrorActivity"
+            android:exported="false" />
+        <activity
             android:name=".ui.protecteduser.SecureBrowserActivity"
             android:exported="false" />
         <activity

@@ -30,6 +30,7 @@ import com.guardianapp.mobile.data.api.LinkResponse;
 import com.guardianapp.mobile.data.audio.EmergencyLiveAudioStreamer;
 import com.guardianapp.mobile.data.realtime.StompRealtimeClient;
 import com.guardianapp.mobile.ui.main.MainActivity;
+import com.guardianapp.mobile.ui.security.SecurityMirrorActivity;
 import com.google.firebase.auth.FirebaseAuth;
 
 import androidx.core.app.ActivityCompat;
@@ -91,6 +92,7 @@ public class ProtectedDashboardActivity extends AppCompatActivity {
         }
 
         Button btnSimulateThreat = findViewById(R.id.btnSimulateThreat);
+        Button btnOpenSecurityMirrorProtected = findViewById(R.id.btnOpenSecurityMirrorProtected);
         Button btnCallHost = findViewById(R.id.btnCallHost);
         Button btnSos = findViewById(R.id.btnSos);
         TextView tvLogout = findViewById(R.id.tvLogoutProtected);
@@ -99,9 +101,17 @@ public class ProtectedDashboardActivity extends AppCompatActivity {
         tvVerificationCodeStatus = findViewById(R.id.tvVerificationCodeStatus);
         emergencyLiveAudioStreamer = new EmergencyLiveAudioStreamer();
 
-        // ¡Abrimos la trampa!
+        // Flujo real de bloqueo por WebView seguro.
         btnSimulateThreat.setOnClickListener(v -> {
             Intent intent = new Intent(this, SecureBrowserActivity.class);
+            intent.putExtra("PROTECTED_ID", miIdProtegido);
+            intent.putExtra("LINK_ID", idDelVinculo);
+            startActivity(intent);
+        });
+
+        // Simulador de mensajes SMS (sin WebView).
+        btnOpenSecurityMirrorProtected.setOnClickListener(v -> {
+            Intent intent = new Intent(this, SecurityMirrorActivity.class);
             intent.putExtra("PROTECTED_ID", miIdProtegido);
             intent.putExtra("LINK_ID", idDelVinculo);
             startActivity(intent);
@@ -711,3 +721,4 @@ public class ProtectedDashboardActivity extends AppCompatActivity {
         dismissVerificationCodeDialog();
     }
 }
+

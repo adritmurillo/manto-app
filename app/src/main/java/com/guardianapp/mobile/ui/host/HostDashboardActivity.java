@@ -22,6 +22,7 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import androidx.core.view.ViewCompat;
 import android.media.MediaPlayer;
+import com.google.android.material.bottomnavigation.BottomNavigationView;
 
 import com.google.firebase.auth.FirebaseAuth;
 import com.guardianapp.mobile.R;
@@ -31,13 +32,17 @@ import com.guardianapp.mobile.data.api.EmergencyAudioRecordingResponse;
 import com.guardianapp.mobile.data.api.ResolveEmergencyAlertRequest;
 import com.guardianapp.mobile.data.api.IdentityVerificationResponse;
 import com.guardianapp.mobile.data.api.LinkResponse;
+import com.guardianapp.mobile.data.api.ResolveSmsThreatAlertRequest;
 import com.guardianapp.mobile.data.api.ResolveAlertRequest;
 import com.guardianapp.mobile.data.api.RespondIdentityVerificationRequest;
 import com.guardianapp.mobile.data.api.RetrofitClient;
+import com.guardianapp.mobile.data.api.SmsThreatAlertResponse;
 import com.guardianapp.mobile.data.realtime.StompRealtimeClient;
 import com.guardianapp.mobile.service.EmergencyLiveAudioService;
 import com.guardianapp.mobile.ui.main.MainActivity;
 import com.guardianapp.mobile.ui.host.FamilyCircleActivity;
+import com.guardianapp.mobile.ui.security.LinkShieldActivity;
+import com.guardianapp.mobile.ui.security.SecurityMirrorActivity;
 
 import java.util.List;
 import java.util.Locale;
@@ -95,7 +100,10 @@ public class HostDashboardActivity extends AppCompatActivity {
         btnOpenEmergencyBanner = findViewById(R.id.btnOpenEmergencyBanner);
         btnMuteEmergencyAudio = findViewById(R.id.btnMuteEmergencyAudio);
         Button btnFamilyCircle = findViewById(R.id.btnFamilyCircle);
+        Button btnOpenLinkShieldDashboard = findViewById(R.id.btnOpenLinkShieldDashboard);
+        Button btnOpenSecurityMirrorDashboard = findViewById(R.id.btnOpenSecurityMirrorDashboard);
         TextView tvLogout = findViewById(R.id.tvLogoutHost);
+        BottomNavigationView bottomNavHost = findViewById(R.id.bottomNavHost);
 
         // Botón para actualizar manualmente la vista y ver si ya pusieron el PIN
         btnRefreshStatus.setOnClickListener(v -> {
@@ -117,6 +125,45 @@ public class HostDashboardActivity extends AppCompatActivity {
             intent.putExtra("HOST_ID", miIdAnfitrion);
             startActivity(intent);
         });
+
+        btnOpenLinkShieldDashboard.setOnClickListener(v -> {
+            Intent intent = new Intent(HostDashboardActivity.this, LinkShieldActivity.class);
+            intent.putExtra("HOST_ID", miIdAnfitrion);
+            startActivity(intent);
+        });
+
+        btnOpenSecurityMirrorDashboard.setOnClickListener(v -> {
+            Intent intent = new Intent(HostDashboardActivity.this, SecurityMirrorActivity.class);
+            intent.putExtra("HOST_ID", miIdAnfitrion);
+            startActivity(intent);
+        });
+
+        if (bottomNavHost != null) {
+            bottomNavHost.setSelectedItemId(R.id.nav_home);
+            bottomNavHost.setOnItemSelectedListener(item -> {
+                int id = item.getItemId();
+                if (id == R.id.nav_home) {
+                    return true;
+                }
+                if (id == R.id.nav_security) {
+                    Intent intent = new Intent(HostDashboardActivity.this, LinkShieldActivity.class);
+                    intent.putExtra("HOST_ID", miIdAnfitrion);
+                    startActivity(intent);
+                    return true;
+                }
+                if (id == R.id.nav_family) {
+                    Intent intent = new Intent(HostDashboardActivity.this, FamilyCircleActivity.class);
+                    intent.putExtra("HOST_ID", miIdAnfitrion);
+                    startActivity(intent);
+                    return true;
+                }
+                if (id == R.id.nav_settings) {
+                    Toast.makeText(this, "Ajustes aun no disponible", Toast.LENGTH_SHORT).show();
+                    return true;
+                }
+                return false;
+            });
+        }
 
         // Secondary hosts should not manage the family circle.
         btnFamilyCircle.setVisibility(View.GONE);
@@ -221,6 +268,7 @@ public class HostDashboardActivity extends AppCompatActivity {
                 if (!isAlertShowing) {
                     checkPendingIdentityVerifications();
                     checkPendingAlerts();
+                    checkPendingSmsThreatAlerts();
                     checkActiveEmergencies();
                 }
                 pollingHandler.postDelayed(this, 3000);
@@ -259,12 +307,35 @@ public class HostDashboardActivity extends AppCompatActivity {
         RetrofitClient.getApiService().getPendingAlerts(miIdAnfitrion).enqueue(new Callback<List<AlertResponse>>() {
             @Override
             public void onResponse(Call<List<AlertResponse>> call, Response<List<AlertResponse>> response) {
+                if (isAlertShowing) {
+                    return;
+                }
                 if (response.isSuccessful() && response.body() != null && !response.body().isEmpty()) {
                     showAlertPopup(response.body().get(0));
                 }
             }
             @Override
             public void onFailure(Call<List<AlertResponse>> call, Throwable t) {}
+        });
+    }
+
+    private void checkPendingSmsThreatAlerts() {
+        if (miIdAnfitrion == null || isAlertShowing) return;
+
+        RetrofitClient.getApiService().getPendingSmsThreatAlerts(miIdAnfitrion).enqueue(new Callback<List<SmsThreatAlertResponse>>() {
+            @Override
+            public void onResponse(Call<List<SmsThreatAlertResponse>> call, Response<List<SmsThreatAlertResponse>> response) {
+                if (isAlertShowing) {
+                    return;
+                }
+                if (response.isSuccessful() && response.body() != null && !response.body().isEmpty()) {
+                    showSmsThreatAlertPopup(response.body().get(0));
+                }
+            }
+
+            @Override
+            public void onFailure(Call<List<SmsThreatAlertResponse>> call, Throwable t) {
+            }
         });
     }
 
@@ -298,6 +369,50 @@ public class HostDashboardActivity extends AppCompatActivity {
                 isAlertShowing = false; // Igual liberamos para no trabar el app
             }
         });
+    }
+
+    private void showSmsThreatAlertPopup(SmsThreatAlertResponse alert) {
+        isAlertShowing = true;
+        String status = alert.getAnalysisStatus() == null ? "SUSPICIOUS" : alert.getAnalysisStatus();
+        String message = "Tu protegido recibio un SMS sospechoso.\n\n"
+                + "Remitente: " + safeText(alert.getSender()) + "\n"
+                + "Estado: " + status + "\n"
+                + "URL: " + safeText(alert.getDetectedUrl()) + "\n\n"
+                + "Mensaje:\n" + safeText(alert.getMessageExcerpt());
+
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setTitle("Alerta SMS de Phishing");
+        builder.setMessage(message);
+        builder.setCancelable(false);
+
+        builder.setPositiveButton("Mantener Bloqueado", (dialog, which) ->
+                resolveSmsThreatAlert(alert.getId(), false, "Bloqueado por anfitrion")
+        );
+        builder.setNegativeButton("Permitir", (dialog, which) ->
+                resolveSmsThreatAlert(alert.getId(), true, "Marcado seguro por anfitrion")
+        );
+
+        builder.show();
+    }
+
+    private void resolveSmsThreatAlert(String alertId, boolean allow, String note) {
+        ResolveSmsThreatAlertRequest request = new ResolveSmsThreatAlertRequest(miIdAnfitrion, allow, note);
+        RetrofitClient.getApiService().resolveSmsThreatAlert(alertId, request)
+                .enqueue(new Callback<SmsThreatAlertResponse>() {
+                    @Override
+                    public void onResponse(Call<SmsThreatAlertResponse> call, Response<SmsThreatAlertResponse> response) {
+                        isAlertShowing = false;
+                    }
+
+                    @Override
+                    public void onFailure(Call<SmsThreatAlertResponse> call, Throwable t) {
+                        isAlertShowing = false;
+                    }
+                });
+    }
+
+    private String safeText(String value) {
+        return value == null || value.isBlank() ? "-" : value;
     }
 
     private void showIdentityVerificationPopup(IdentityVerificationResponse verification) {

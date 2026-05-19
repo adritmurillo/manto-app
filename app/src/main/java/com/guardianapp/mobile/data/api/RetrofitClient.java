@@ -5,9 +5,8 @@ import retrofit2.converter.gson.GsonConverterFactory;
 
 public class RetrofitClient {
 
-    // URL pública de Ngrok apuntando a tu Spring Boot en localhost:8080
-    // IMPORTANTE: ¡Nunca olvides el slash "/" al final!
-    private static final String BASE_URL = "https://quaking-tablet-spectator.ngrok-free.dev/";
+    
+    private static final String BASE_URL = "https://bf3e-38-190-100-77.ngrok-free.app/";
 
     private static Retrofit retrofit = null;
 

@@ -7,7 +7,7 @@ import android.view.View;
 import android.webkit.WebResourceRequest;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
-import android.widget.LinearLayout;
+import android.widget.ScrollView;
 import android.widget.TextView;
 import android.widget.Toast;
 import androidx.appcompat.app.AppCompatActivity;
@@ -24,7 +24,7 @@ import retrofit2.Response;
 public class SecureBrowserActivity extends AppCompatActivity {
 
     private WebView webView;
-    private LinearLayout layoutBlockScreen;
+    private ScrollView layoutBlockScreen;
     private TextView tvWaitMessage;
 
     private String miIdProtegido;
@@ -50,7 +50,7 @@ public class SecureBrowserActivity extends AppCompatActivity {
             @Override
             public boolean shouldOverrideUrlLoading(WebView view, WebResourceRequest request) {
                 String url = request.getUrl().toString();
-                // ¡CORREGIDO! Interceptamos la URL falsa de tu HTML
+                // Lógica original de demo por patrones de URL.
                 if (url.contains("robar-datos") || url.contains("banco-falso")) {
                     triggerBlockAndAlert(url);
                     return true;
@@ -60,8 +60,6 @@ public class SecureBrowserActivity extends AppCompatActivity {
         });
 
         webView.getSettings().setJavaScriptEnabled(true);
-
-        // ¡CORREGIDO! Cargamos tu formulario HTML falso de la carpeta assets
         webView.loadUrl("file:///android_asset/formulario_trampa.html");
     }
 
@@ -69,17 +67,24 @@ public class SecureBrowserActivity extends AppCompatActivity {
         layoutBlockScreen.setVisibility(View.VISIBLE);
         webView.setVisibility(View.GONE);
 
+        if (idDelVinculo == null || idDelVinculo.isBlank() || miIdProtegido == null || miIdProtegido.isBlank()) {
+            Toast.makeText(this, "Faltan datos del vinculo para alertar al anfitrion", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
         CreateAlertRequest request = new CreateAlertRequest(idDelVinculo, miIdProtegido, maliciousUrl, "Phishing detectado");
         RetrofitClient.getApiService().createAlert(request).enqueue(new Callback<AlertResponse>() {
             @Override
             public void onResponse(Call<AlertResponse> call, Response<AlertResponse> response) {
                 if (response.isSuccessful() && response.body() != null) {
                     currentAlertId = response.body().getId();
-                    startPollingAlertStatus(); // Empezamos a preguntar si ya nos dieron permiso
+                    startPollingAlertStatus();
                 }
             }
+
             @Override
-            public void onFailure(Call<AlertResponse> call, Throwable t) {}
+            public void onFailure(Call<AlertResponse> call, Throwable t) {
+            }
         });
     }
 
@@ -93,7 +98,6 @@ public class SecureBrowserActivity extends AppCompatActivity {
                         if (response.isSuccessful() && response.body() != null) {
                             String status = response.body().getStatus();
                             if ("RESOLVED_SAFE".equals(status)) {
-                                // Permiso concedido, quitamos pantalla roja
                                 layoutBlockScreen.setVisibility(View.GONE);
                                 webView.setVisibility(View.VISIBLE);
                                 webView.loadUrl(response.body().getSuspiciousUrl());
@@ -104,8 +108,10 @@ public class SecureBrowserActivity extends AppCompatActivity {
                             }
                         }
                     }
+
                     @Override
-                    public void onFailure(Call<AlertResponse> call, Throwable t) {}
+                    public void onFailure(Call<AlertResponse> call, Throwable t) {
+                    }
                 });
                 pollingHandler.postDelayed(this, 3000);
             }
@@ -114,7 +120,9 @@ public class SecureBrowserActivity extends AppCompatActivity {
     }
 
     private void stopPolling() {
-        if (pollingRunnable != null) pollingHandler.removeCallbacks(pollingRunnable);
+        if (pollingRunnable != null) {
+            pollingHandler.removeCallbacks(pollingRunnable);
+        }
     }
 
     @Override
