@@ -5,11 +5,14 @@
     <string name="login_subtitle">Cuidando lo que más importa</string>
     <string name="login_welcome">Bienvenido</string>
     <string name="login_instruction">Ingresa tus credenciales para continuar</string>
+    <string name="login_email_title">CORREO</string>
+    <string name="login_contra_title">CONTRASEÑA</string>
     <string name="login_email_hint">tu@correo.com</string>
     <string name="login_password_hint">***************</string>
     <string name="login_forgot_password">¿Olvidaste tu contraseña?</string>
     <string name="login_button">Iniciar Sesión</string>
-    <string name="login_create_account">¿Nuevo en Manto? Crear cuenta</string>
+    <string name="login_create_account_text">¿Nuevo en Manto? </string>
+    <string name="login_create_account_link">Crear cuenta</string>
 
     <string name="toast_login_attempt">Intentando iniciar sesión con: </string>
     <string name="toast_register_navigate">Yendo a la pantalla de registro</string>

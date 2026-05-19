@@ -4,4 +4,5 @@
     <color name="white">#FFFFFFFF</color>
     <color name="manto_green">#1F9A7B</color> <color name="manto_gray_text">#757575</color>
     <color name="manto_background">#F5F5F5</color>
+    <color name="new_manto_background">#F6FAF8</color>
 </resources>
