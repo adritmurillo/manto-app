@@ -12,6 +12,19 @@ import retrofit2.Response;
 
 public class LinkShieldRepository {
 
+    public static class ApiFailure extends RuntimeException {
+        private final int statusCode;
+
+        public ApiFailure(int statusCode, String message) {
+            super(message);
+            this.statusCode = statusCode;
+        }
+
+        public int getStatusCode() {
+            return statusCode;
+        }
+    }
+
     public interface ResultCallback<T> {
         void onSuccess(T data);
 
@@ -24,7 +37,7 @@ public class LinkShieldRepository {
             @Override
             public void onResponse(Call<AnalyzeSingleUrlResponse> call, Response<AnalyzeSingleUrlResponse> response) {
                 if (!response.isSuccessful() || response.body() == null) {
-                    callback.onError(new IllegalStateException("Analyze URL API error: " + response.code()));
+                    callback.onError(new ApiFailure(response.code(), "Analyze URL API error: " + response.code()));
                     return;
                 }
                 callback.onSuccess(response.body());
@@ -43,7 +56,7 @@ public class LinkShieldRepository {
             @Override
             public void onResponse(Call<RegisterBlacklistUrlResponse> call, Response<RegisterBlacklistUrlResponse> response) {
                 if (!response.isSuccessful() || response.body() == null) {
-                    callback.onError(new IllegalStateException("Blacklist API error: " + response.code()));
+                    callback.onError(new ApiFailure(response.code(), "Blacklist API error: " + response.code()));
                     return;
                 }
                 callback.onSuccess(response.body());

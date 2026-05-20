@@ -18,6 +18,7 @@ import com.guardianapp.mobile.data.security.LinkShieldRepository;
 import com.guardianapp.mobile.ui.host.FamilyCircleActivity;
 import com.guardianapp.mobile.ui.host.HostDashboardActivity;
 
+import java.util.List;
 import java.util.Locale;
 
 public class LinkShieldActivity extends AppCompatActivity {
@@ -120,7 +121,7 @@ public class LinkShieldActivity extends AppCompatActivity {
                 if (etBlacklistUrl.getText().toString().isBlank()) {
                     etBlacklistUrl.setText(data.getUrl() != null ? data.getUrl() : normalizedUrl);
                 }
-                tvAnalysisResult.setText("Estado: " + status + "\n" + reason);
+                tvAnalysisResult.setText(buildAnalysisSummary(data, status, reason));
                 Toast.makeText(
                         LinkShieldActivity.this,
                         blocked ? "Riesgo detectado. Puedes bloquear el dominio." : "URL segura.",
@@ -131,6 +132,11 @@ public class LinkShieldActivity extends AppCompatActivity {
             @Override
             public void onError(Throwable error) {
                 setAnalyzeLoading(false);
+                if (isStatusCode(error, 400)) {
+                    tvAnalysisResult.setText("Error de validacion: URL vacia o invalida.");
+                    Toast.makeText(LinkShieldActivity.this, "VALIDATION_ERROR (400)", Toast.LENGTH_SHORT).show();
+                    return;
+                }
                 tvAnalysisResult.setText("No se pudo analizar la URL.");
                 Toast.makeText(LinkShieldActivity.this, "Error: " + error.getMessage(), Toast.LENGTH_LONG).show();
             }
@@ -168,6 +174,14 @@ public class LinkShieldActivity extends AppCompatActivity {
             @Override
             public void onError(Throwable error) {
                 setBlockLoading(false);
+                if (isStatusCode(error, 409)) {
+                    Toast.makeText(LinkShieldActivity.this, "La URL ya existe en lista negra (409)", Toast.LENGTH_SHORT).show();
+                    return;
+                }
+                if (isStatusCode(error, 400)) {
+                    Toast.makeText(LinkShieldActivity.this, "VALIDATION_ERROR (400)", Toast.LENGTH_SHORT).show();
+                    return;
+                }
                 Toast.makeText(LinkShieldActivity.this, "No se pudo bloquear: " + error.getMessage(), Toast.LENGTH_LONG).show();
             }
         });
@@ -210,5 +224,33 @@ public class LinkShieldActivity extends AppCompatActivity {
     private void setBlockLoading(boolean loading) {
         btnBlockDomain.setEnabled(!loading);
         btnBlockDomain.setText(loading ? "Bloqueando..." : "Bloquear Dominio");
+    }
+
+    private String buildAnalysisSummary(AnalyzeSingleUrlResponse data, String status, String reason) {
+        StringBuilder sb = new StringBuilder();
+        sb.append("Estado: ").append(status).append('\n');
+        sb.append("Reason: ").append(reason).append('\n');
+        sb.append("Score: ").append(data.getHeuristicScore()).append('\n');
+        sb.append("Signals: ").append(joinSignals(data.getSignals())).append('\n');
+        sb.append("Source: ").append(safeValue(data.getSource())).append('\n');
+        sb.append("DetectedAt: ").append(safeValue(data.getDetectedAt())).append('\n');
+        sb.append("Whitelisted: ").append(data.isWhitelisted() ? "true" : "false");
+        return sb.toString();
+    }
+
+    private String joinSignals(List<String> signals) {
+        if (signals == null || signals.isEmpty()) {
+            return "-";
+        }
+        return String.join(", ", signals);
+    }
+
+    private String safeValue(String value) {
+        return value == null || value.isBlank() ? "-" : value;
+    }
+
+    private boolean isStatusCode(Throwable error, int statusCode) {
+        return error instanceof LinkShieldRepository.ApiFailure
+                && ((LinkShieldRepository.ApiFailure) error).getStatusCode() == statusCode;
     }
 }
