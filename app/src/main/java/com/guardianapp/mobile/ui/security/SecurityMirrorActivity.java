@@ -136,7 +136,7 @@ public class SecurityMirrorActivity extends AppCompatActivity {
 
     private void simulatePhishing() {
         String sender = "+21 973749157";
-        String message = "URGENTE BCP: cuenta bloqueada por actividad sospechosa. Para evitar bloqueo, ingresa tu clave, PIN y codigo de seguridad ahora.";
+        String message = "URGENTE BCP: cuenta bloqueada por actividad sospechosa. Para evitar bloqueo, ingresa tu clave y codigo de seguridad ahora.";
         String url = "http://verifica-cuenta-bcp-segura.xyz/login";
         etSender.setText(sender);
         etMessage.setText(message);

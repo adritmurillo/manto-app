@@ -30,11 +30,9 @@ import com.guardianapp.mobile.data.api.AlertResponse;
 import com.guardianapp.mobile.data.api.EmergencyAlertResponse;
 import com.guardianapp.mobile.data.api.EmergencyAudioRecordingResponse;
 import com.guardianapp.mobile.data.api.ResolveEmergencyAlertRequest;
-import com.guardianapp.mobile.data.api.IdentityVerificationResponse;
 import com.guardianapp.mobile.data.api.LinkResponse;
 import com.guardianapp.mobile.data.api.ResolveSmsThreatAlertRequest;
 import com.guardianapp.mobile.data.api.ResolveAlertRequest;
-import com.guardianapp.mobile.data.api.RespondIdentityVerificationRequest;
 import com.guardianapp.mobile.data.api.RetrofitClient;
 import com.guardianapp.mobile.data.api.SmsThreatAlertResponse;
 import com.guardianapp.mobile.data.realtime.StompRealtimeClient;
@@ -58,8 +56,6 @@ public class HostDashboardActivity extends AppCompatActivity {
     private Handler pollingHandler;
     private Runnable pollingRunnable;
 
-    private LinearLayout layoutPendingAction;
-    private TextView tvConnectionCodeDisplay;
     private Button btnRefreshStatus;
     private boolean isAlertShowing = false;
     private TextView tvEmergencyHistoryEmpty;
@@ -74,7 +70,6 @@ public class HostDashboardActivity extends AppCompatActivity {
     private boolean liveAudioMuted;
     private MediaPlayer emergencyAudioPlayer;
     private AlertDialog emergencyAudioDialog;
-    private final StompRealtimeClient verificationRealtimeClient = new StompRealtimeClient();
     private final StompRealtimeClient linkRealtimeClient = new StompRealtimeClient();
     private final StompRealtimeClient emergencyRealtimeClient = new StompRealtimeClient();
     private final Handler audioHealthHandler = new Handler(Looper.getMainLooper());
@@ -90,8 +85,6 @@ public class HostDashboardActivity extends AppCompatActivity {
         miIdAnfitrion = getIntent().getStringExtra("HOST_ID");
 
         // Enlazamos las vistas
-        layoutPendingAction = findViewById(R.id.layoutPendingAction);
-        tvConnectionCodeDisplay = findViewById(R.id.tvConnectionCodeDisplay);
         btnRefreshStatus = findViewById(R.id.btnRefreshStatus);
         tvEmergencyHistoryEmpty = findViewById(R.id.tvEmergencyHistoryEmpty);
         rvEmergencyHistory = findViewById(R.id.rvEmergencyHistory);
@@ -99,13 +92,12 @@ public class HostDashboardActivity extends AppCompatActivity {
         tvEmergencyBannerText = findViewById(R.id.tvEmergencyBannerText);
         btnOpenEmergencyBanner = findViewById(R.id.btnOpenEmergencyBanner);
         btnMuteEmergencyAudio = findViewById(R.id.btnMuteEmergencyAudio);
-        Button btnFamilyCircle = findViewById(R.id.btnFamilyCircle);
         Button btnOpenLinkShieldDashboard = findViewById(R.id.btnOpenLinkShieldDashboard);
         Button btnOpenSecurityMirrorDashboard = findViewById(R.id.btnOpenSecurityMirrorDashboard);
         TextView tvLogout = findViewById(R.id.tvLogoutHost);
         BottomNavigationView bottomNavHost = findViewById(R.id.bottomNavHost);
 
-        // Botón para actualizar manualmente la vista y ver si ya pusieron el PIN
+        // Botón para actualizar manualmente la vista
         btnRefreshStatus.setOnClickListener(v -> {
             Toast.makeText(this, "Actualizando estado...", Toast.LENGTH_SHORT).show();
             loadLinkStatus();
@@ -120,11 +112,6 @@ public class HostDashboardActivity extends AppCompatActivity {
 
         btnMuteEmergencyAudio.setOnClickListener(v -> toggleEmergencyAudio());
 
-        btnFamilyCircle.setOnClickListener(v -> {
-            Intent intent = new Intent(HostDashboardActivity.this, FamilyCircleActivity.class);
-            intent.putExtra("HOST_ID", miIdAnfitrion);
-            startActivity(intent);
-        });
 
         btnOpenLinkShieldDashboard.setOnClickListener(v -> {
             Intent intent = new Intent(HostDashboardActivity.this, LinkShieldActivity.class);
@@ -165,33 +152,6 @@ public class HostDashboardActivity extends AppCompatActivity {
             });
         }
 
-        // Secondary hosts should not manage the family circle.
-        btnFamilyCircle.setVisibility(View.GONE);
-        RetrofitClient.getApiService().getMyFamilyGroups(miIdAnfitrion).enqueue(new Callback<List<com.guardianapp.mobile.data.api.FamilyGroupResponse>>() {
-            @Override
-            public void onResponse(Call<List<com.guardianapp.mobile.data.api.FamilyGroupResponse>> call, Response<List<com.guardianapp.mobile.data.api.FamilyGroupResponse>> response) {
-                boolean isPrimaryHost = false;
-                if (response.isSuccessful() && response.body() != null) {
-                    for (com.guardianapp.mobile.data.api.FamilyGroupResponse g : response.body()) {
-                        if (g == null || g.getMembers() == null) continue;
-                        for (com.guardianapp.mobile.data.api.FamilyGroupResponse.MemberResponse m : g.getMembers()) {
-                            if (m != null && miIdAnfitrion.equals(m.getUserId()) && "PRIMARY_HOST".equals(m.getRole())) {
-                                isPrimaryHost = true;
-                                break;
-                            }
-                        }
-                        if (isPrimaryHost) break;
-                    }
-                }
-                btnFamilyCircle.setVisibility(isPrimaryHost ? View.VISIBLE : View.GONE);
-            }
-
-            @Override
-            public void onFailure(Call<List<com.guardianapp.mobile.data.api.FamilyGroupResponse>> call, Throwable t) {
-                // Keep hidden on failure.
-                btnFamilyCircle.setVisibility(View.GONE);
-            }
-        });
 
         tvLogout.setOnClickListener(v -> {
             stopPolling();
@@ -216,22 +176,6 @@ public class HostDashboardActivity extends AppCompatActivity {
             return;
         }
         String wsUrl = RetrofitClient.getWebSocketUrl();
-        String verificationTopic = "/topic/host/" + miIdAnfitrion + "/identity-verifications";
-        verificationRealtimeClient.connect(wsUrl, verificationTopic, new StompRealtimeClient.EventListener() {
-            @Override
-            public void onEvent(String body) {
-                runOnUiThread(() -> {
-                    if (!isAlertShowing) {
-                        checkPendingIdentityVerifications();
-                    }
-                });
-            }
-
-            @Override
-            public void onConnected() {
-            }
-        });
-
         String linkTopic = "/topic/host/" + miIdAnfitrion + "/links";
         linkRealtimeClient.connect(wsUrl, linkTopic, new StompRealtimeClient.EventListener() {
             @Override
@@ -266,7 +210,6 @@ public class HostDashboardActivity extends AppCompatActivity {
             @Override
             public void run() {
                 if (!isAlertShowing) {
-                    checkPendingIdentityVerifications();
                     checkPendingAlerts();
                     checkPendingSmsThreatAlerts();
                     checkActiveEmergencies();
@@ -275,24 +218,6 @@ public class HostDashboardActivity extends AppCompatActivity {
             }
         };
         pollingHandler.post(pollingRunnable);
-    }
-
-    private void checkPendingIdentityVerifications() {
-        if (miIdAnfitrion == null || isAlertShowing) return;
-
-        RetrofitClient.getApiService().getPendingIdentityVerifications(miIdAnfitrion)
-                .enqueue(new Callback<List<IdentityVerificationResponse>>() {
-                    @Override
-                    public void onResponse(Call<List<IdentityVerificationResponse>> call, Response<List<IdentityVerificationResponse>> response) {
-                        if (response.isSuccessful() && response.body() != null && !response.body().isEmpty() && !isAlertShowing) {
-                            showIdentityVerificationPopup(response.body().get(0));
-                        }
-                    }
-
-                    @Override
-                    public void onFailure(Call<List<IdentityVerificationResponse>> call, Throwable t) {
-                    }
-                });
     }
 
     private void stopPolling() {
@@ -411,33 +336,6 @@ public class HostDashboardActivity extends AppCompatActivity {
                 });
     }
 
-    private String safeText(String value) {
-        return value == null || value.isBlank() ? "-" : value;
-    }
-
-    private void showIdentityVerificationPopup(IdentityVerificationResponse verification) {
-        isAlertShowing = true;
-        AlertDialog.Builder builder = new AlertDialog.Builder(this);
-        builder.setTitle("🔐 Verificación de identidad");
-        builder.setMessage(
-                "Tu protegido solicita verificar una llamada.\n\n" +
-                "Persona que dice ser: " + verification.getClaimedPerson() + "\n" +
-                "Código de verificación familiar: " + verification.getChallengeCode() + "\n\n" +
-                "Confirma que ese mismo código lo vea tu familiar."
-        );
-        builder.setCancelable(false);
-
-        builder.setPositiveButton("No soy yo", (dialog, which) ->
-                respondIdentityVerification(verification.getId(), false, "No soy yo, cortar llamada")
-        );
-
-        builder.setNegativeButton("Sí soy yo", (dialog, which) ->
-                respondIdentityVerification(verification.getId(), true, "Sí, identidad confirmada")
-        );
-
-        builder.show();
-    }
-
     private void checkActiveEmergencies() {
         if (miIdAnfitrion == null || isAlertShowing) return;
 
@@ -472,6 +370,10 @@ public class HostDashboardActivity extends AppCompatActivity {
                     public void onFailure(Call<List<EmergencyAlertResponse>> call, Throwable t) {
                     }
                 });
+    }
+
+    private String safeText(String value) {
+        return value == null || value.isBlank() ? "-" : value;
     }
 
     private void showEmergencyPopup(EmergencyAlertResponse emergency) {
@@ -832,51 +734,17 @@ public class HostDashboardActivity extends AppCompatActivity {
                 });
     }
 
-    private void respondIdentityVerification(String verificationId, boolean approved, String note) {
-        RespondIdentityVerificationRequest request = new RespondIdentityVerificationRequest(
-                miIdAnfitrion,
-                approved,
-                note
-        );
-        RetrofitClient.getApiService().respondIdentityVerification(verificationId, request)
-                .enqueue(new Callback<IdentityVerificationResponse>() {
-                    @Override
-                    public void onResponse(Call<IdentityVerificationResponse> call, Response<IdentityVerificationResponse> response) {
-                        isAlertShowing = false;
-                    }
-
-                    @Override
-                    public void onFailure(Call<IdentityVerificationResponse> call, Throwable t) {
-                        isAlertShowing = false;
-                    }
-                });
-    }
-
     private void loadLinkStatus() {
         if (miIdAnfitrion == null) return;
 
         RetrofitClient.getApiService().getMyLinks(miIdAnfitrion).enqueue(new Callback<List<LinkResponse>>() {
             @Override
             public void onResponse(Call<List<LinkResponse>> call, Response<List<LinkResponse>> response) {
-                if (response.isSuccessful() && response.body() != null && !response.body().isEmpty()) {
-                    LinkResponse pending = null;
-                    for (LinkResponse link : response.body()) {
-                        if ("PENDING".equals(link.getStatus())) {
-                            pending = link;
-                            break;
-                        }
-                    }
-
-                    if (pending != null) {
-                        // Mostramos el cartel gigante naranja con el código de 6 dígitos
-                        layoutPendingAction.setVisibility(View.VISIBLE);
-                        tvConnectionCodeDisplay.setText(pending.getConnectionCode());
-                    } else {
-                        // Si no hay pendientes, lo ocultamos
-                        layoutPendingAction.setVisibility(View.GONE);
-                    }
+                if (!response.isSuccessful()) {
+                    Toast.makeText(HostDashboardActivity.this, "Error conectando con servidor", Toast.LENGTH_SHORT).show();
                 }
             }
+
             @Override
             public void onFailure(Call<List<LinkResponse>> call, Throwable t) {
                 Toast.makeText(HostDashboardActivity.this, "Error conectando con servidor", Toast.LENGTH_SHORT).show();
@@ -936,7 +804,6 @@ public class HostDashboardActivity extends AppCompatActivity {
         stopEmergencyAudioPlayback();
         stopAudioHealthCheck();
         stopPolling();
-        verificationRealtimeClient.disconnect();
         linkRealtimeClient.disconnect();
         emergencyRealtimeClient.disconnect();
     }

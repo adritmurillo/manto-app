@@ -22,7 +22,6 @@ import com.guardianapp.mobile.data.api.FamilyGroupResponse;
 import com.guardianapp.mobile.data.api.LinkResponse;
 import com.guardianapp.mobile.data.api.RetrofitClient;
 import com.guardianapp.mobile.data.api.UserResponse;
-import com.guardianapp.mobile.ui.auth.VerificationActivity;
 import com.guardianapp.mobile.ui.host.HostDashboardActivity;
 import com.guardianapp.mobile.ui.protecteduser.ProtectedDashboardActivity;
 
@@ -268,12 +267,7 @@ public class HomeActivity extends AppCompatActivity {
                     Toast.makeText(HomeActivity.this, "¡Código aceptado! Configurando seguridad...", Toast.LENGTH_SHORT).show();
 
                     LinkResponse link = response.body();
-                    Intent intent;
-                    if ("ACTIVE".equals(link.getStatus())) {
-                        intent = new Intent(HomeActivity.this, ProtectedDashboardActivity.class);
-                    } else {
-                        intent = new Intent(HomeActivity.this, VerificationActivity.class);
-                    }
+                    Intent intent = new Intent(HomeActivity.this, ProtectedDashboardActivity.class);
                     intent.putExtra("PROTECTED_ID", currentUserIdPostgres);
                     intent.putExtra("LINK_ID", link.getId());
                     startActivity(intent);
@@ -298,8 +292,7 @@ public class HomeActivity extends AppCompatActivity {
                     public void onResponse(Call<FamilyGroupResponse> call, Response<FamilyGroupResponse> response) {
                         if (response.isSuccessful()) {
                             Toast.makeText(HomeActivity.this, "Te uniste al circulo familiar", Toast.LENGTH_SHORT).show();
-                            // Backend creates a PENDING link for PROTECTED and SECONDARY_HOST.
-                            // Route based on role: secondary hosts should reach the host dashboard after PIN.
+                            // Route based on role after accepting the family invitation.
                             FamilyGroupResponse group = response.body();
                             String role = null;
                             if (group != null && group.getMembers() != null) {
@@ -311,10 +304,9 @@ public class HomeActivity extends AppCompatActivity {
                                 }
                             }
                             if ("SECONDARY_HOST".equals(role)) {
-                                routeSecondaryHostToVerificationOrDashboard();
+                                routeSecondaryHostToDashboard();
                             } else {
-                                // Retry briefly so it works immediately after accept.
-                                routeProtectedToVerificationOrDashboardWithRetry();
+                                routeProtectedToDashboardWithRetry();
                             }
                         } else {
                             Toast.makeText(HomeActivity.this, "Codigo invalido o expirado", Toast.LENGTH_SHORT).show();
@@ -328,15 +320,15 @@ public class HomeActivity extends AppCompatActivity {
                 });
     }
 
-    private void routeSecondaryHostToVerificationOrDashboard() {
-        routeToVerificationOrDashboardWithRetry(true, 0);
+    private void routeSecondaryHostToDashboard() {
+        routeToDashboardWithRetry(true, 0);
     }
 
-    private void routeProtectedToVerificationOrDashboardWithRetry() {
-        routeToVerificationOrDashboardWithRetry(false, 0);
+    private void routeProtectedToDashboardWithRetry() {
+        routeToDashboardWithRetry(false, 0);
     }
 
-    private void routeToVerificationOrDashboardWithRetry(boolean activeGoesToHostDashboard, int attempt) {
+    private void routeToDashboardWithRetry(boolean activeGoesToHostDashboard, int attempt) {
         if (currentUserIdPostgres == null) {
             return;
         }
@@ -344,38 +336,26 @@ public class HomeActivity extends AppCompatActivity {
             @Override
             public void onResponse(Call<List<LinkResponse>> call, Response<List<LinkResponse>> response) {
                 if (response.isSuccessful() && response.body() != null) {
-                    LinkResponse pending = null;
                     LinkResponse active = null;
 
                     for (LinkResponse link : response.body()) {
                         if (!currentUserIdPostgres.equals(link.getProtectedUserId())) {
                             continue;
                         }
-                        if ("PENDING".equals(link.getStatus())) {
-                            pending = link;
-                            break;
-                        }
                         if (active == null && "ACTIVE".equals(link.getStatus())) {
                             active = link;
                         }
                     }
 
-                    LinkResponse chosen = pending != null ? pending : active;
-                    if (chosen != null) {
+                    if (active != null) {
                         Intent intent;
-                        if ("ACTIVE".equals(chosen.getStatus())) {
-                            intent = new Intent(HomeActivity.this,
-                                    activeGoesToHostDashboard ? HostDashboardActivity.class : ProtectedDashboardActivity.class);
-                            if (activeGoesToHostDashboard) {
-                                intent.putExtra("HOST_ID", currentUserIdPostgres);
-                            } else {
-                                intent.putExtra("PROTECTED_ID", currentUserIdPostgres);
-                                intent.putExtra("LINK_ID", chosen.getId());
-                            }
+                        intent = new Intent(HomeActivity.this,
+                                activeGoesToHostDashboard ? HostDashboardActivity.class : ProtectedDashboardActivity.class);
+                        if (activeGoesToHostDashboard) {
+                            intent.putExtra("HOST_ID", currentUserIdPostgres);
                         } else {
-                            intent = new Intent(HomeActivity.this, VerificationActivity.class);
                             intent.putExtra("PROTECTED_ID", currentUserIdPostgres);
-                            intent.putExtra("LINK_ID", chosen.getId());
+                            intent.putExtra("LINK_ID", active.getId());
                         }
                         startActivity(intent);
                         finish();
@@ -385,7 +365,7 @@ public class HomeActivity extends AppCompatActivity {
 
                 // The accept call may return before the link shows up in reads; retry briefly.
                 if (attempt < 6) {
-                    routeRetryHandler.postDelayed(() -> routeToVerificationOrDashboardWithRetry(activeGoesToHostDashboard, attempt + 1), 600L);
+                    routeRetryHandler.postDelayed(() -> routeToDashboardWithRetry(activeGoesToHostDashboard, attempt + 1), 600L);
                     return;
                 }
 
@@ -396,7 +376,7 @@ public class HomeActivity extends AppCompatActivity {
             @Override
             public void onFailure(Call<List<LinkResponse>> call, Throwable t) {
                 if (attempt < 6) {
-                    routeRetryHandler.postDelayed(() -> routeToVerificationOrDashboardWithRetry(activeGoesToHostDashboard, attempt + 1), 600L);
+                    routeRetryHandler.postDelayed(() -> routeToDashboardWithRetry(activeGoesToHostDashboard, attempt + 1), 600L);
                     return;
                 }
                 btnLinkAccount.setEnabled(true);
@@ -404,36 +384,25 @@ public class HomeActivity extends AppCompatActivity {
         });
     }
 
-    private void routeProtectedToVerificationOrDashboard() {
+    private void routeProtectedToDashboard() {
         RetrofitClient.getApiService().getMyLinks(currentUserIdPostgres).enqueue(new Callback<List<LinkResponse>>() {
             @Override
             public void onResponse(Call<List<LinkResponse>> call, Response<List<LinkResponse>> response) {
                 if (response.isSuccessful() && response.body() != null) {
-                    LinkResponse pending = null;
                     LinkResponse active = null;
                     for (LinkResponse link : response.body()) {
                         if (!currentUserIdPostgres.equals(link.getProtectedUserId())) {
                             continue;
-                        }
-                        if ("PENDING".equals(link.getStatus())) {
-                            pending = link;
-                            break;
                         }
                         if (active == null && "ACTIVE".equals(link.getStatus())) {
                             active = link;
                         }
                     }
 
-                    LinkResponse chosen = pending != null ? pending : active;
-                    if (chosen != null) {
-                        Intent intent;
-                        if ("ACTIVE".equals(chosen.getStatus())) {
-                            intent = new Intent(HomeActivity.this, ProtectedDashboardActivity.class);
-                        } else {
-                            intent = new Intent(HomeActivity.this, VerificationActivity.class);
-                        }
+                    if (active != null) {
+                        Intent intent = new Intent(HomeActivity.this, ProtectedDashboardActivity.class);
                         intent.putExtra("PROTECTED_ID", currentUserIdPostgres);
-                        intent.putExtra("LINK_ID", chosen.getId());
+                        intent.putExtra("LINK_ID", active.getId());
                         startActivity(intent);
                         finish();
                         return;

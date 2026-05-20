@@ -86,12 +86,7 @@ public class JoinCircleActivity extends AppCompatActivity {
                 if (response.isSuccessful() && response.body() != null) {
                     LinkResponse link = response.body();
                     Toast.makeText(JoinCircleActivity.this, "Código validado", Toast.LENGTH_SHORT).show();
-                    Intent intent;
-                    if ("ACTIVE".equals(link.getStatus())) {
-                        intent = new Intent(JoinCircleActivity.this, ProtectedDashboardActivity.class);
-                    } else {
-                        intent = new Intent(JoinCircleActivity.this, VerificationActivity.class);
-                    }
+                    Intent intent = new Intent(JoinCircleActivity.this, ProtectedDashboardActivity.class);
                     intent.putExtra("PROTECTED_ID", userId);
                     intent.putExtra("LINK_ID", link.getId());
                     startActivity(intent);
@@ -125,9 +120,9 @@ public class JoinCircleActivity extends AppCompatActivity {
                                 }
                             }
                             if ("SECONDARY_HOST".equals(role)) {
-                                routeToVerificationOrDashboardWithRetry(true, 0);
+                                routeToDashboardWithRetry(true, 0);
                             } else {
-                                routeToVerificationOrDashboardWithRetry(false, 0);
+                                routeToDashboardWithRetry(false, 0);
                             }
                         } else {
                             Toast.makeText(JoinCircleActivity.this, "Código inválido o expirado", Toast.LENGTH_SHORT).show();
@@ -141,42 +136,30 @@ public class JoinCircleActivity extends AppCompatActivity {
                 });
     }
 
-    private void routeToVerificationOrDashboardWithRetry(boolean activeGoesToHostDashboard, int attempt) {
+    private void routeToDashboardWithRetry(boolean activeGoesToHostDashboard, int attempt) {
         RetrofitClient.getApiService().getMyLinks(userId).enqueue(new Callback<List<LinkResponse>>() {
             @Override
             public void onResponse(Call<List<LinkResponse>> call, Response<List<LinkResponse>> response) {
                 if (response.isSuccessful() && response.body() != null) {
-                    LinkResponse pending = null;
                     LinkResponse active = null;
                     for (LinkResponse link : response.body()) {
                         if (!userId.equals(link.getProtectedUserId())) {
                             continue;
-                        }
-                        if ("PENDING".equals(link.getStatus())) {
-                            pending = link;
-                            break;
                         }
                         if (active == null && "ACTIVE".equals(link.getStatus())) {
                             active = link;
                         }
                     }
 
-                    LinkResponse chosen = pending != null ? pending : active;
-                    if (chosen != null) {
+                    if (active != null) {
                         Intent intent;
-                        if ("ACTIVE".equals(chosen.getStatus())) {
-                            if (activeGoesToHostDashboard) {
-                                intent = new Intent(JoinCircleActivity.this, HostDashboardActivity.class);
-                                intent.putExtra("HOST_ID", userId);
-                            } else {
-                                intent = new Intent(JoinCircleActivity.this, ProtectedDashboardActivity.class);
-                                intent.putExtra("PROTECTED_ID", userId);
-                                intent.putExtra("LINK_ID", chosen.getId());
-                            }
+                        if (activeGoesToHostDashboard) {
+                            intent = new Intent(JoinCircleActivity.this, HostDashboardActivity.class);
+                            intent.putExtra("HOST_ID", userId);
                         } else {
-                            intent = new Intent(JoinCircleActivity.this, VerificationActivity.class);
+                            intent = new Intent(JoinCircleActivity.this, ProtectedDashboardActivity.class);
                             intent.putExtra("PROTECTED_ID", userId);
-                            intent.putExtra("LINK_ID", chosen.getId());
+                            intent.putExtra("LINK_ID", active.getId());
                         }
                         startActivity(intent);
                         finish();
@@ -185,7 +168,7 @@ public class JoinCircleActivity extends AppCompatActivity {
                 }
 
                 if (attempt < 6) {
-                    routeRetryHandler.postDelayed(() -> routeToVerificationOrDashboardWithRetry(activeGoesToHostDashboard, attempt + 1), 600L);
+                    routeRetryHandler.postDelayed(() -> routeToDashboardWithRetry(activeGoesToHostDashboard, attempt + 1), 600L);
                 } else {
                     Toast.makeText(JoinCircleActivity.this, "No se pudo resolver el vínculo todavía", Toast.LENGTH_SHORT).show();
                 }
@@ -194,7 +177,7 @@ public class JoinCircleActivity extends AppCompatActivity {
             @Override
             public void onFailure(Call<List<LinkResponse>> call, Throwable t) {
                 if (attempt < 6) {
-                    routeRetryHandler.postDelayed(() -> routeToVerificationOrDashboardWithRetry(activeGoesToHostDashboard, attempt + 1), 600L);
+                    routeRetryHandler.postDelayed(() -> routeToDashboardWithRetry(activeGoesToHostDashboard, attempt + 1), 600L);
                 } else {
                     Toast.makeText(JoinCircleActivity.this, "Error consultando vínculo", Toast.LENGTH_SHORT).show();
                 }

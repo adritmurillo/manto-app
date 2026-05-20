@@ -26,7 +26,6 @@ import com.guardianapp.mobile.data.api.NotificationRegistrar;
 import com.guardianapp.mobile.data.api.RetrofitClient;
 import com.guardianapp.mobile.data.api.UserResponse;
 import com.guardianapp.mobile.ui.auth.RegisterActivity;
-import com.guardianapp.mobile.ui.auth.VerificationActivity;
 import com.guardianapp.mobile.ui.host.HostDashboardActivity;
 import com.guardianapp.mobile.ui.invite.InviteEntryActivity;
 
@@ -167,34 +166,13 @@ public class MainActivity extends AppCompatActivity {
 
                             // Si la lista NO está vacía (tiene vínculos pendientes o activos)
                             if (responseLinks.isSuccessful() && responseLinks.body() != null && !responseLinks.body().isEmpty()) {
-                                // Prefer pending link for protected users, so the PIN screen shows immediately.
                                 LinkResponse chosen = responseLinks.body().get(0);
-                                LinkResponse pendingAsProtected = null;
-                                for (LinkResponse l : responseLinks.body()) {
-                                    if (!postgresId.equals(l.getHostId()) && postgresId.equals(l.getProtectedUserId()) && "PENDING".equals(l.getStatus())) {
-                                        pendingAsProtected = l;
-                                        break;
-                                    }
-                                }
-                                if (pendingAsProtected != null) {
-                                    chosen = pendingAsProtected;
-                                }
-
                                 if (chosen.getHostId().equals(postgresId)) {
-                                    // Es el Anfitrión (Él siempre va al Dashboard, ahí verá el PIN)
                                     intent = new Intent(MainActivity.this, HostDashboardActivity.class);
                                     intent.putExtra("HOST_ID", postgresId);
                                 } else {
-                                    // Este usuario es el "protected" del vínculo (puede ser PROTECTED real o SECONDARY_HOST).
-                                    if ("ACTIVE".equals(chosen.getStatus())) {
-                                        // Si ya está ACTIVE, lo mandamos al dashboard de host si el usuario es host en alguna familia.
-                                        routeToHostOrProtectedDashboard(postgresId);
-                                        return;
-                                    }
-                                    // Está PENDING -> Va a la pantalla para poner el PIN
-                                    intent = new Intent(MainActivity.this, VerificationActivity.class);
-                                    intent.putExtra("PROTECTED_ID", postgresId);
-                                    intent.putExtra("LINK_ID", chosen.getId());
+                                    routeToHostOrProtectedDashboard(postgresId);
+                                    return;
                                 }
                             } else {
                                 // No tiene vínculos: mostrar selector inicial.
