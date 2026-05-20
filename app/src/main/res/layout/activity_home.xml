@@ -12,141 +12,199 @@
         android:orientation="vertical"
         android:padding="24dp">
 
-    <TextView
-        android:id="@+id/tvLogoutHome"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_gravity="end"
-        android:text="Cerrar sesion"
-        android:textColor="@color/manto_green"
-        android:textStyle="bold"
-        android:padding="8dp" />
+        <!--
+        <TextView
+            android:id="@+id/tvLogoutHome"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="end"
+            android:text="Cerrar sesion"
+            android:textColor="@color/manto_green"
+            android:textStyle="bold"
+            android:padding="8dp" />
+        -->
 
     <TextView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Bienvenido a Manto"
-        android:textSize="28sp"
+        android:fontFamily="@font/plus_jakarta_sans_bold"
+        android:text="@string/login_title"
+        android:textSize="36sp"
+        android:textColor="#006B64"
         android:textStyle="bold"
         android:textAlignment="center"
-        android:layout_marginBottom="32dp"/>
+        android:layout_marginBottom="12dp"/>
 
-    <com.google.android.material.card.MaterialCardView
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center_horizontal"
+            android:layout_marginBottom="16dp"
+            android:background="@drawable/bg_chip_config"
+            android:fontFamily="@font/plus_jakarta_sans_bold"
+            android:paddingStart="16dp"
+            android:paddingTop="8dp"
+            android:paddingEnd="16dp"
+            android:paddingBottom="8dp"
+            android:text="@string/configuracion"
+            android:textColor="#757575"
+            android:textSize="14sp"/>
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:fontFamily="@font/manrope_regular"
+            android:text="@string/texto_config"
+            android:textSize="32sp"
+            android:textColor="@color/black"
+            android:textStyle="bold"
+            android:textAlignment="center"
+            android:layout_marginBottom="12dp"/>
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:fontFamily="@font/manrope_regular"
+            android:text="@string/sub_texto_config"
+            android:textSize="16sp"
+            android:textColor="@color/black"
+            android:textAlignment="center"
+            android:layout_marginBottom="25dp"/>
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:fontFamily="@font/manrope_regular"
+            android:text="Nombre del circulo"
+            android:textSize="16sp"
+            android:textColor="@color/black"
+            android:layout_marginBottom="12dp"/>
+
+        <com.google.android.material.textfield.TextInputLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+            app:boxCornerRadiusTopStart="12dp"
+            app:boxCornerRadiusTopEnd="12dp"
+            app:boxCornerRadiusBottomStart="12dp"
+            app:boxCornerRadiusBottomEnd="12dp"
+            app:boxBackgroundColor="#D9E5E2"
+            app:boxStrokeColor="@android:color/transparent"
+            app:boxStrokeWidth="0dp"
+            android:fontFamily="@font/manrope_regular"
+            android:hint="ej. Familia Sanchez"
+            android:layout_marginBottom="16dp">
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/etName"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:inputType="textPersonName"/>
+        </com.google.android.material.textfield.TextInputLayout>
+
+
+
+
+        <com.google.android.material.card.MaterialCardView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         app:cardCornerRadius="12dp"
         app:cardElevation="4dp"
-        android:layout_marginBottom="24dp">
+        android:layout_marginBottom="24dp"
+
+            app:cardBackgroundColor="#E6F0EE">
+
 
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical"
-            android:padding="16dp">
+            android:padding="25dp">
 
             <TextView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="Quiero proteger a un familiar"
-                android:textSize="18sp"
-                android:textStyle="bold"
-                android:textColor="@color/manto_green"
+                android:fontFamily="@font/manrope_regular"
+                android:text="Codigo de invitacion"
+                android:textSize="16sp"
+                android:textColor="@color/black"
+                android:gravity="center"
                 android:layout_marginBottom="8dp"/>
 
             <TextView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="Genera un código de invitación para que tu familiar lo ingrese en su celular."
-                android:textSize="14sp"
-                android:layout_marginBottom="16dp"/>
-
-            <Button
-                android:id="@+id/btnGenerateCode"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="Generar Código"
-                android:backgroundTint="@color/manto_green"/>
-
-            <TextView
-                android:id="@+id/tvGeneratedCode"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="---"
+                android:fontFamily="@font/manrope_regular"
+                android:textColor="#006B64"
+                android:text="M4nt0-W15K"
                 android:textSize="32sp"
+                android:gravity="center"
                 android:textStyle="bold"
-                android:textAlignment="center"
-                android:layout_marginTop="16dp"
-                android:textColor="@android:color/black"/>
-
-            <Button
-                android:id="@+id/btnShareInviteLink"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="Compartir Link"
-                android:enabled="false"
-                android:layout_marginTop="12dp"
-                android:backgroundTint="@color/manto_green"/>
-
-        </LinearLayout>
-    </com.google.android.material.card.MaterialCardView>
-
-    <com.google.android.material.card.MaterialCardView
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        app:cardCornerRadius="12dp"
-        app:cardElevation="4dp">
-
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="vertical"
-            android:padding="16dp">
+                android:layout_marginBottom="16dp"/>
 
             <TextView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="Un familiar me invitó"
-                android:textSize="18sp"
-                android:textStyle="bold"
-                android:textColor="@color/manto_green"
-                android:layout_marginBottom="8dp"/>
-
-            <TextView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="Ingresa el código de 8 caracteres que te dio tu familiar anfitrión."
-                android:textSize="14sp"
+                android:fontFamily="@font/manrope_regular"
+                android:text="Comparte este código con los miembros de tu familia para que se una"
+                android:textSize="16sp"
+                android:gravity="center"
                 android:layout_marginBottom="16dp"/>
 
-            <EditText
-                android:id="@+id/etInvitationCode"
+            <!-- BOTONES -->
+            <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:hint="Ej: A4B92X (vinculo) o token familia"
-                android:maxLength="8"
-                android:textAllCaps="true"
-                android:textAlignment="center"
-                android:textSize="24sp"
-                android:layout_marginBottom="16dp"/>
+                android:orientation="horizontal"
+                android:gravity="center"
+                android:layout_marginTop="12dp">
 
-            <Button
-                android:id="@+id/btnLinkAccount"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="Vincularme"
-                android:backgroundTint="@color/manto_green"/>
+                <androidx.appcompat.widget.AppCompatButton
+                    android:id="@+id/btnGenerateCode"
+                    android:layout_width="0dp"
+                    android:layout_height="56dp"
+                    android:layout_weight="1"
+                    android:layout_marginEnd="8dp"
+                    android:fontFamily="@font/manrope_regular"
+                    android:text="Generar Nuevo"
+                    android:textColor="@color/black"
+                    android:textAllCaps="false"
+                    android:textSize="15dp"
+                    android:drawableStart="@android:drawable/ic_popup_sync"
+                    android:drawablePadding="4dp"
+                    android:background="@drawable/bg_generar_nuevo"/>
+
+                <androidx.appcompat.widget.AppCompatButton
+                    android:id="@+id/btnShareInviteLink"
+                    android:layout_width="0dp"
+                    android:layout_height="56dp"
+                    android:layout_weight="1"
+                    android:layout_marginStart="8dp"
+                    android:fontFamily="@font/manrope_regular"
+                    android:textSize="15dp"
+                    android:text="Compartir"
+                    android:textColor="#FFFFFF"
+                    android:textAllCaps="false"
+                    android:background="@drawable/bg_iniciar_sesion_rounded"/>
+
+            </LinearLayout>
 
         </LinearLayout>
     </com.google.android.material.card.MaterialCardView>
 
     <Button
-        android:id="@+id/btnSkipForNow"
+
+        android:id="@+id/btnContinuar"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="16dp"
-        android:text="OMITIR POR AHORA"
+        android:layout_height="56dp"
+        android:layout_marginTop="21dp"
+        android:fontFamily="@font/manrope_regular"
+        android:text="Continuar"
+        android:textSize="21dp"
         android:backgroundTint="#B0BEC5"
-        android:textColor="@android:color/black" />
+        android:textStyle="bold"
+        android:textAllCaps="false"
+        android:background="@drawable/bg_iniciar_sesion_rounded"
+        android:textColor="#FFFFFF"/>
 
     </LinearLayout>
 </ScrollView>

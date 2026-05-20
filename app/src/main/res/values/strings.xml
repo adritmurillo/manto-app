@@ -14,6 +14,10 @@
     <string name="login_create_account_text">¿Nuevo en Manto? </string>
     <string name="login_create_account_link">Crear cuenta</string>
 
+    <string name="configuracion">CONFIGURACIÓN DEL DISPOSITIVO</string>
+    <string name="texto_config">El corazón de tu hogar</string>
+    <string name="sub_texto_config">Definie el nombre de tu circulo y genera una invitación para conectar a tu familiar</string>
+
     <string name="toast_login_attempt">Intentando iniciar sesión con: </string>
     <string name="toast_register_navigate">Yendo a la pantalla de registro</string>
 
