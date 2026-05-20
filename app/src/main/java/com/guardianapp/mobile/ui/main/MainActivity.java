@@ -150,8 +150,10 @@ public class MainActivity extends AppCompatActivity {
                     // If there is a pending invite token, auto-continue the linking flow.
                     String pendingToken = PendingInviteStore.pop(MainActivity.this);
                     if (pendingToken != null && !pendingToken.isBlank()) {
-                        Intent intent = new Intent(MainActivity.this, HomeActivity.class);
-                        intent.putExtra(HomeActivity.EXTRA_PREFILL_INVITE_TOKEN, pendingToken);
+                        Intent intent = new Intent(MainActivity.this, DeviceSetupActivity.class);
+                        intent.putExtra(DeviceSetupActivity.EXTRA_USER_ID, postgresId);
+                        intent.putExtra(DeviceSetupActivity.EXTRA_PREFILL_INVITE_TOKEN, pendingToken);
+                        intent.putExtra(DeviceSetupActivity.EXTRA_ROLE_PREFILL, DeviceSetupActivity.ROLE_PROTECTED);
                         startActivity(intent);
                         finish();
                         return;
@@ -195,8 +197,9 @@ public class MainActivity extends AppCompatActivity {
                                     intent.putExtra("LINK_ID", chosen.getId());
                                 }
                             } else {
-                                // No tiene ningún vínculo. Va a la pantalla de crear/poner código
-                                intent = new Intent(MainActivity.this, HomeActivity.class);
+                                // No tiene vínculos: mostrar selector inicial.
+                                intent = new Intent(MainActivity.this, DeviceSetupActivity.class);
+                                intent.putExtra(DeviceSetupActivity.EXTRA_USER_ID, postgresId);
                             }
 
                             startActivity(intent);

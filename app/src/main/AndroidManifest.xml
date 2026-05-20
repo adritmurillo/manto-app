@@ -57,6 +57,15 @@
             android:name=".ui.main.HomeActivity"
             android:exported="false" />
         <activity
+            android:name=".ui.main.DeviceSetupActivity"
+            android:exported="false" />
+        <activity
+            android:name=".ui.host.HostCodeSetupActivity"
+            android:exported="false" />
+        <activity
+            android:name=".ui.auth.JoinCircleActivity"
+            android:exported="false" />
+        <activity
             android:name=".ui.main.MainActivity"
             android:exported="true">
             <intent-filter>
