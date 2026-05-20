@@ -191,20 +191,28 @@
         </LinearLayout>
     </com.google.android.material.card.MaterialCardView>
 
-    <Button
+        <androidx.appcompat.widget.AppCompatButton
+            android:id="@+id/btnSetupContinue"
+            android:layout_width="match_parent"
+            android:layout_height="56dp"
+            android:layout_marginTop="24dp"
+            android:background="@drawable/bg_iniciar_sesion_rounded"
+            android:fontFamily="@font/manrope_regular"
+            android:text="Continuar"
+            android:textAllCaps="false"
+            android:textColor="@android:color/white"
+            android:textSize="21sp"
+            android:textStyle="bold" />
 
-        android:id="@+id/btnContinuar"
-        android:layout_width="match_parent"
-        android:layout_height="56dp"
-        android:layout_marginTop="21dp"
-        android:fontFamily="@font/manrope_regular"
-        android:text="Continuar"
-        android:textSize="21dp"
-        android:backgroundTint="#B0BEC5"
-        android:textStyle="bold"
-        android:textAllCaps="false"
-        android:background="@drawable/bg_iniciar_sesion_rounded"
-        android:textColor="#FFFFFF"/>
-
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:gravity="center"
+            android:fontFamily="@font/manrope_regular"
+            android:text="Paso 2 de 2 - Configurando tu seguridad"
+            android:textColor="#8A8D8F"
+            android:textSize="14sp"
+            android:textStyle="bold" />
     </LinearLayout>
 </ScrollView>
