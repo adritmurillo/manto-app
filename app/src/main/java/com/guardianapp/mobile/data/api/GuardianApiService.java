@@ -68,10 +68,23 @@ public interface GuardianApiService {
             @Body AddFamilyMemberRequest request
     );
 
+    @PUT("api/v1/families/{familyId}")
+    Call<FamilyGroupResponse> renameFamilyGroup(
+            @Path("familyId") String familyId,
+            @Header("X-User-Id") String requesterUserId,
+            @Body RenameFamilyGroupRequest request
+    );
+
     @retrofit2.http.DELETE("api/v1/families/{familyId}/members/{memberUserId}")
     Call<FamilyGroupResponse> removeFamilyMember(
             @Path("familyId") String familyId,
             @Path("memberUserId") String memberUserId,
+            @Header("X-User-Id") String requesterUserId
+    );
+
+    @retrofit2.http.DELETE("api/v1/families/{familyId}")
+    Call<Void> disbandFamilyGroup(
+            @Path("familyId") String familyId,
             @Header("X-User-Id") String requesterUserId
     );
 

@@ -27,7 +27,8 @@ import com.guardianapp.mobile.data.api.LinkResponse;
 import com.guardianapp.mobile.data.audio.EmergencyLiveAudioStreamer;
 import com.guardianapp.mobile.data.realtime.StompRealtimeClient;
 import com.guardianapp.mobile.ui.main.MainActivity;
-import com.guardianapp.mobile.ui.security.SecurityMirrorActivity;
+import com.guardianapp.mobile.ui.common.AppNavigator;
+import com.guardianapp.mobile.ui.common.FamilyAccessGuard;
 import com.google.firebase.auth.FirebaseAuth;
 
 import androidx.core.app.ActivityCompat;
@@ -63,6 +64,8 @@ public class ProtectedDashboardActivity extends AppCompatActivity {
     private boolean requestingEmergencyLocation;
     private final StompRealtimeClient linkRealtimeClient = new StompRealtimeClient();
     private final StompRealtimeClient emergencyStatusClient = new StompRealtimeClient();
+    private final Handler familyGuardHandler = new Handler(Looper.getMainLooper());
+    private Runnable familyGuardRunnable;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -81,7 +84,6 @@ public class ProtectedDashboardActivity extends AppCompatActivity {
         }
 
         Button btnSimulateThreat = findViewById(R.id.btnSimulateThreat);
-        Button btnOpenSecurityMirrorProtected = findViewById(R.id.btnOpenSecurityMirrorProtected);
         Button btnSos = findViewById(R.id.btnSos);
         TextView tvLogout = findViewById(R.id.tvLogoutProtected);
         emergencyLiveAudioStreamer = new EmergencyLiveAudioStreamer();
@@ -94,17 +96,7 @@ public class ProtectedDashboardActivity extends AppCompatActivity {
             startActivity(intent);
         });
 
-        // Simulador de mensajes SMS (sin WebView).
-        btnOpenSecurityMirrorProtected.setOnClickListener(v -> {
-            Intent intent = new Intent(this, SecurityMirrorActivity.class);
-            intent.putExtra("PROTECTED_ID", miIdProtegido);
-            intent.putExtra("LINK_ID", idDelVinculo);
-            startActivity(intent);
-        });
-
-
-
-        btnSos.setOnClickListener(v -> showEmergencyConfirmationDialog());
+        btnSos.setOnClickListener(v -> validateAccessBeforeEmergency(this::showEmergencyConfirmationDialog));
 
         checkActiveEmergencyOnEntry();
 
@@ -116,6 +108,18 @@ public class ProtectedDashboardActivity extends AppCompatActivity {
         });
 
         connectRealtime();
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        startFamilyGuard();
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        stopFamilyGuard();
     }
 
     private void recoverLinkIdFromBackend() {
@@ -509,15 +513,12 @@ public class ProtectedDashboardActivity extends AppCompatActivity {
                             for (LinkResponse link : response.body()) {
                                 if (miIdProtegido.equals(link.getProtectedUserId())) {
                                     if ("ACTIVE".equals(link.getStatus())) {
-                                        Intent intent = new Intent(ProtectedDashboardActivity.this, ProtectedDashboardActivity.class);
-                                        intent.putExtra("PROTECTED_ID", miIdProtegido);
-                                        intent.putExtra("LINK_ID", link.getId());
-                                        startActivity(intent);
-                                        finish();
+                                        idDelVinculo = link.getId();
                                         return;
                                     }
                                 }
                             }
+                            AppNavigator.goToDeviceSetup(ProtectedDashboardActivity.this, miIdProtegido);
                         }
                     }
 
@@ -531,6 +532,7 @@ public class ProtectedDashboardActivity extends AppCompatActivity {
     @Override
     protected void onDestroy() {
         super.onDestroy();
+        stopFamilyGuard();
         if (emergencyStopRunnable != null) {
             emergencyAudioHandler.removeCallbacks(emergencyStopRunnable);
         }
@@ -538,6 +540,52 @@ public class ProtectedDashboardActivity extends AppCompatActivity {
         stopAndUploadEmergencyAudio();
         linkRealtimeClient.disconnect();
         emergencyStatusClient.disconnect();
+    }
+
+    private void startFamilyGuard() {
+        stopFamilyGuard();
+        familyGuardRunnable = new Runnable() {
+            @Override
+            public void run() {
+                FamilyAccessGuard.ensureInFamily(ProtectedDashboardActivity.this, miIdProtegido, () ->
+                        familyGuardHandler.postDelayed(this, 5000L)
+                );
+            }
+        };
+        familyGuardHandler.post(familyGuardRunnable);
+    }
+
+    private void stopFamilyGuard() {
+        if (familyGuardRunnable != null) {
+            familyGuardHandler.removeCallbacks(familyGuardRunnable);
+        }
+    }
+
+    private void validateAccessBeforeEmergency(Runnable onAllowed) {
+        FamilyAccessGuard.ensureInFamily(this, miIdProtegido, () ->
+                RetrofitClient.getApiService().getMyLinks(miIdProtegido).enqueue(new Callback<java.util.List<LinkResponse>>() {
+                    @Override
+                    public void onResponse(Call<java.util.List<LinkResponse>> call, Response<java.util.List<LinkResponse>> response) {
+                        if (!response.isSuccessful() || response.body() == null) {
+                            Toast.makeText(ProtectedDashboardActivity.this, "No se pudo validar tu vinculo", Toast.LENGTH_SHORT).show();
+                            return;
+                        }
+                        for (LinkResponse link : response.body()) {
+                            if (miIdProtegido.equals(link.getProtectedUserId()) && "ACTIVE".equals(link.getStatus())) {
+                                idDelVinculo = link.getId();
+                                onAllowed.run();
+                                return;
+                            }
+                        }
+                        AppNavigator.goToDeviceSetup(ProtectedDashboardActivity.this, miIdProtegido);
+                    }
+
+                    @Override
+                    public void onFailure(Call<java.util.List<LinkResponse>> call, Throwable t) {
+                        Toast.makeText(ProtectedDashboardActivity.this, "Error validando vinculo", Toast.LENGTH_SHORT).show();
+                    }
+                })
+        );
     }
 
 }

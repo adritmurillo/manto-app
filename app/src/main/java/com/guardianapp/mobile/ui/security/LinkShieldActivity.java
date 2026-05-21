@@ -15,6 +15,7 @@ import com.guardianapp.mobile.R;
 import com.guardianapp.mobile.data.api.AnalyzeSingleUrlResponse;
 import com.guardianapp.mobile.data.api.RegisterBlacklistUrlResponse;
 import com.guardianapp.mobile.data.security.LinkShieldRepository;
+import com.guardianapp.mobile.ui.common.FamilyAccessGuard;
 import com.guardianapp.mobile.ui.host.FamilyCircleActivity;
 import com.guardianapp.mobile.ui.host.HostDashboardActivity;
 
@@ -32,6 +33,8 @@ public class LinkShieldActivity extends AppCompatActivity {
     private TextView tvAnalysisResult;
     private Button btnAnalyzeLink;
     private Button btnBlockDomain;
+    private final android.os.Handler familyGuardHandler = new android.os.Handler(android.os.Looper.getMainLooper());
+    private Runnable familyGuardRunnable;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -57,6 +60,18 @@ public class LinkShieldActivity extends AppCompatActivity {
 
         setupBottomNavigation();
         refreshBlockedList();
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        startFamilyGuard();
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        stopFamilyGuard();
     }
 
     private void setupBottomNavigation() {
@@ -290,5 +305,27 @@ public class LinkShieldActivity extends AppCompatActivity {
     private boolean isStatusCode(Throwable error, int statusCode) {
         return error instanceof LinkShieldRepository.ApiFailure
                 && ((LinkShieldRepository.ApiFailure) error).getStatusCode() == statusCode;
+    }
+
+    private void startFamilyGuard() {
+        if (hostId == null || hostId.isBlank()) {
+            return;
+        }
+        stopFamilyGuard();
+        familyGuardRunnable = new Runnable() {
+            @Override
+            public void run() {
+                FamilyAccessGuard.ensureInFamily(LinkShieldActivity.this, hostId, () ->
+                        familyGuardHandler.postDelayed(this, 5000L)
+                );
+            }
+        };
+        familyGuardHandler.post(familyGuardRunnable);
+    }
+
+    private void stopFamilyGuard() {
+        if (familyGuardRunnable != null) {
+            familyGuardHandler.removeCallbacks(familyGuardRunnable);
+        }
     }
 }

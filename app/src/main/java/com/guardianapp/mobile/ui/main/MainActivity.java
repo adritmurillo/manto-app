@@ -1,7 +1,5 @@
 package com.guardianapp.mobile.ui.main;
 
-import static androidx.core.content.ContextCompat.startActivity;
-
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.os.Build;
@@ -9,34 +7,29 @@ import android.os.Bundle;
 import android.widget.Button;
 import android.widget.TextView;
 import android.widget.Toast;
+
+import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
-import androidx.appcompat.app.AppCompatActivity;
-import com.google.android.material.textfield.TextInputEditText;
 
-// Importar la librería de Firebase
+import com.google.android.material.textfield.TextInputEditText;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
-
-// Importar Retrofit y nuestros DTOs
 import com.guardianapp.mobile.R;
-import com.guardianapp.mobile.data.api.LinkResponse;
 import com.guardianapp.mobile.data.api.FamilyGroupResponse;
 import com.guardianapp.mobile.data.api.NotificationRegistrar;
 import com.guardianapp.mobile.data.api.RetrofitClient;
 import com.guardianapp.mobile.data.api.UserResponse;
 import com.guardianapp.mobile.ui.auth.RegisterActivity;
+import com.guardianapp.mobile.ui.common.AppNavigator;
 import com.guardianapp.mobile.ui.host.HostDashboardActivity;
 import com.guardianapp.mobile.ui.invite.InviteEntryActivity;
-
-import java.util.List;
+import com.guardianapp.mobile.ui.invite.PendingInviteStore;
+import com.guardianapp.mobile.ui.protecteduser.ProtectedDashboardActivity;
 
 import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
-
-import com.guardianapp.mobile.ui.invite.PendingInviteStore;
-import com.guardianapp.mobile.ui.protecteduser.ProtectedDashboardActivity;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -47,14 +40,12 @@ public class MainActivity extends AppCompatActivity {
     private Button btnLogin;
     private TextView tvCreateAccount;
 
-    // Declarar la variable de autenticación
     private FirebaseAuth mAuth;
 
     @Override
     protected void onStart() {
         super.onStart();
 
-        // If the user is already logged in, continue automatically (supports invite link flow).
         FirebaseUser currentUser = FirebaseAuth.getInstance().getCurrentUser();
         if (currentUser != null && currentUser.getEmail() != null) {
             continueAfterFirebaseLogin(currentUser.getEmail());
@@ -68,10 +59,8 @@ public class MainActivity extends AppCompatActivity {
 
         requestNotificationPermissionIfNeeded();
 
-        // Inicializar Firebase Auth
         mAuth = FirebaseAuth.getInstance();
 
-        // If we arrived from an invite link, persist it so we can continue after login/registration.
         String inviteToken = getIntent() != null ? getIntent().getStringExtra(InviteEntryActivity.EXTRA_INVITE_TOKEN) : null;
         if (inviteToken != null && !inviteToken.isBlank()) {
             PendingInviteStore.save(this, inviteToken);
@@ -86,35 +75,26 @@ public class MainActivity extends AppCompatActivity {
             String email = etEmail.getText().toString();
             String password = etPassword.getText().toString();
 
-            // Validar que no estén vacíos
             if (email.isEmpty() || password.isEmpty()) {
                 Toast.makeText(this, "Por favor llena todos los campos", Toast.LENGTH_SHORT).show();
                 return;
             }
 
-            // ¡La magia de Firebase! Le pasamos las credenciales
             mAuth.signInWithEmailAndPassword(email, password)
                     .addOnCompleteListener(this, task -> {
                         if (task.isSuccessful()) {
-
-                            // 1. Firebase dijo que sí. Obtenemos el correo.
                             Toast.makeText(MainActivity.this, "Verificando perfil...", Toast.LENGTH_SHORT).show();
                             FirebaseUser currentUser = mAuth.getCurrentUser();
                             if (currentUser == null || currentUser.getEmail() == null) return;
 
-                            String userEmail = currentUser.getEmail();
-
-                            continueAfterFirebaseLogin(userEmail);
-
+                            continueAfterFirebaseLogin(currentUser.getEmail());
                         } else {
-                            // Firebase dijo que no (contraseña mal, correo no existe, etc)
                             Toast.makeText(MainActivity.this, "Error: " + task.getException().getMessage(), Toast.LENGTH_LONG).show();
                         }
                     });
         });
 
         tvCreateAccount.setOnClickListener(v -> {
-            // Navigate to Register Screen
             Intent intent = new Intent(MainActivity.this, RegisterActivity.class);
             startActivity(intent);
         });
@@ -138,7 +118,6 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void continueAfterFirebaseLogin(String userEmail) {
-        // 2. Buscamos el UUID en PostgreSQL a través de Spring Boot
         RetrofitClient.getApiService().getUserByEmail(userEmail).enqueue(new Callback<UserResponse>() {
             @Override
             public void onResponse(Call<UserResponse> call, Response<UserResponse> response) {
@@ -146,7 +125,6 @@ public class MainActivity extends AppCompatActivity {
                     String postgresId = response.body().getId();
                     NotificationRegistrar.registerToken(postgresId);
 
-                    // If there is a pending invite token, auto-continue the linking flow.
                     String pendingToken = PendingInviteStore.pop(MainActivity.this);
                     if (pendingToken != null && !pendingToken.isBlank()) {
                         Intent intent = new Intent(MainActivity.this, DeviceSetupActivity.class);
@@ -158,38 +136,7 @@ public class MainActivity extends AppCompatActivity {
                         return;
                     }
 
-                    // 3. Preguntamos si tiene CUALQUIER vínculo
-                    RetrofitClient.getApiService().getMyLinks(postgresId).enqueue(new Callback<List<LinkResponse>>() {
-                        @Override
-                        public void onResponse(Call<List<LinkResponse>> call, Response<List<LinkResponse>> responseLinks) {
-                            Intent intent;
-
-                            // Si la lista NO está vacía (tiene vínculos pendientes o activos)
-                            if (responseLinks.isSuccessful() && responseLinks.body() != null && !responseLinks.body().isEmpty()) {
-                                LinkResponse chosen = responseLinks.body().get(0);
-                                if (chosen.getHostId().equals(postgresId)) {
-                                    intent = new Intent(MainActivity.this, HostDashboardActivity.class);
-                                    intent.putExtra("HOST_ID", postgresId);
-                                } else {
-                                    routeToHostOrProtectedDashboard(postgresId);
-                                    return;
-                                }
-                            } else {
-                                // No tiene vínculos: mostrar selector inicial.
-                                intent = new Intent(MainActivity.this, DeviceSetupActivity.class);
-                                intent.putExtra(DeviceSetupActivity.EXTRA_USER_ID, postgresId);
-                            }
-
-                            startActivity(intent);
-                            finish();
-                        }
-
-                        @Override
-                        public void onFailure(Call<List<LinkResponse>> call, Throwable t) {
-                            Toast.makeText(MainActivity.this, "Error de red buscando vínculos", Toast.LENGTH_SHORT).show();
-                        }
-                    });
-
+                    routeToHostOrProtectedDashboard(postgresId);
                 } else {
                     Toast.makeText(MainActivity.this, "Usuario no encontrado en base de datos", Toast.LENGTH_SHORT).show();
                 }
@@ -206,19 +153,24 @@ public class MainActivity extends AppCompatActivity {
         RetrofitClient.getApiService().getMyFamilyGroups(postgresId).enqueue(new Callback<java.util.List<FamilyGroupResponse>>() {
             @Override
             public void onResponse(Call<java.util.List<FamilyGroupResponse>> call, Response<java.util.List<FamilyGroupResponse>> response) {
-                boolean isHost = false;
-                if (response.isSuccessful() && response.body() != null) {
-                    for (FamilyGroupResponse g : response.body()) {
-                        if (g == null || g.getMembers() == null) continue;
-                        for (FamilyGroupResponse.MemberResponse m : g.getMembers()) {
-                            if (m != null && postgresId.equals(m.getUserId()) && ("PRIMARY_HOST".equals(m.getRole()) || "SECONDARY_HOST".equals(m.getRole()))) {
-                                isHost = true;
-                                break;
-                            }
-                        }
-                        if (isHost) break;
-                    }
+                if (!response.isSuccessful() || response.body() == null || response.body().isEmpty()) {
+                    AppNavigator.goToDeviceSetup(MainActivity.this, postgresId);
+                    return;
                 }
+
+                boolean isHost = false;
+                for (FamilyGroupResponse g : response.body()) {
+                    if (g == null || g.getMembers() == null) continue;
+                    for (FamilyGroupResponse.MemberResponse m : g.getMembers()) {
+                        if (m != null && postgresId.equals(m.getUserId())
+                                && ("PRIMARY_HOST".equals(m.getRole()) || "SECONDARY_HOST".equals(m.getRole()))) {
+                            isHost = true;
+                            break;
+                        }
+                    }
+                    if (isHost) break;
+                }
+
                 if (isHost) {
                     Intent intent = new Intent(MainActivity.this, HostDashboardActivity.class);
                     intent.putExtra("HOST_ID", postgresId);
@@ -231,39 +183,41 @@ public class MainActivity extends AppCompatActivity {
 
             @Override
             public void onFailure(Call<java.util.List<FamilyGroupResponse>> call, Throwable t) {
-                resolveProtectedExtrasAndOpenDashboard(postgresId);
+                AppNavigator.goToDeviceSetup(MainActivity.this, postgresId);
             }
         });
     }
 
     private void resolveProtectedExtrasAndOpenDashboard(String protectedUserId) {
-        RetrofitClient.getApiService().getMyLinks(protectedUserId).enqueue(new Callback<java.util.List<LinkResponse>>() {
+        RetrofitClient.getApiService().getMyLinks(protectedUserId).enqueue(new Callback<java.util.List<com.guardianapp.mobile.data.api.LinkResponse>>() {
             @Override
-            public void onResponse(Call<java.util.List<LinkResponse>> call, Response<java.util.List<LinkResponse>> response) {
+            public void onResponse(Call<java.util.List<com.guardianapp.mobile.data.api.LinkResponse>> call,
+                                   Response<java.util.List<com.guardianapp.mobile.data.api.LinkResponse>> response) {
                 String linkId = null;
                 if (response.isSuccessful() && response.body() != null) {
-                    for (LinkResponse link : response.body()) {
+                    for (com.guardianapp.mobile.data.api.LinkResponse link : response.body()) {
                         if (protectedUserId.equals(link.getProtectedUserId()) && "ACTIVE".equals(link.getStatus())) {
                             linkId = link.getId();
                             break;
                         }
                     }
                 }
+
+                if (linkId == null || linkId.isBlank()) {
+                    AppNavigator.goToDeviceSetup(MainActivity.this, protectedUserId);
+                    return;
+                }
+
                 Intent intent = new Intent(MainActivity.this, ProtectedDashboardActivity.class);
                 intent.putExtra("PROTECTED_ID", protectedUserId);
-                if (linkId != null) {
-                    intent.putExtra("LINK_ID", linkId);
-                }
+                intent.putExtra("LINK_ID", linkId);
                 startActivity(intent);
                 finish();
             }
 
             @Override
-            public void onFailure(Call<java.util.List<LinkResponse>> call, Throwable t) {
-                Intent intent = new Intent(MainActivity.this, ProtectedDashboardActivity.class);
-                intent.putExtra("PROTECTED_ID", protectedUserId);
-                startActivity(intent);
-                finish();
+            public void onFailure(Call<java.util.List<com.guardianapp.mobile.data.api.LinkResponse>> call, Throwable t) {
+                AppNavigator.goToDeviceSetup(MainActivity.this, protectedUserId);
             }
         });
     }

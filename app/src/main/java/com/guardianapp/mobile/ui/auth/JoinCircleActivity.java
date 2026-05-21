@@ -120,7 +120,10 @@ public class JoinCircleActivity extends AppCompatActivity {
                                 }
                             }
                             if ("SECONDARY_HOST".equals(role)) {
-                                routeToDashboardWithRetry(true, 0);
+                                Intent intent = new Intent(JoinCircleActivity.this, HostDashboardActivity.class);
+                                intent.putExtra("HOST_ID", userId);
+                                startActivity(intent);
+                                finish();
                             } else {
                                 routeToDashboardWithRetry(false, 0);
                             }

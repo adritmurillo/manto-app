@@ -1,0 +1,296 @@
+{\rtf1\ansi\deff0{\fonttbl{\f0 Calibri;}}\fs22 # Manual de Instalacion y Configuracion - Manto\par
+\par
+Este manual cubre **3 frentes**:\par
+1. Backend (`D:\\\\integrador2\\\\backend\\\\manto-backend`)\par
+2. App Android (`D:\\\\integrador2\\\\MOBILE`)\par
+3. Base de datos PostgreSQL\par
+\par
+---\par
+\par
+## 1) Versiones Requeridas\par
+\par
+### Backend\par
+- Java / JDK: **21**\par
+- Maven: usar **Maven Wrapper** del proyecto (`mvnw`, `mvnw.cmd`)\par
+- Spring Boot: **4.0.5** (definido en `pom.xml`)\par
+- Puerto API: **8080**\par
+\par
+### Android\par
+- Android Studio: version reciente compatible con **AGP 9.0.0**\par
+- Gradle Wrapper: **9.3.1**\par
+- JDK para Gradle: **21**\par
+- compileSdk: **36**\par
+- targetSdk: **36**\par
+- minSdk: **24**\par
+\par
+### PostgreSQL\par
+- Recomendado: **PostgreSQL 16** (en Docker Compose se usa `postgres:16-alpine`)\par
+- Puerto DB: **5432**\par
+\par
+---\par
+\par
+## 2) Manual PostgreSQL (Paso a paso)\par
+\par
+## Opcion A (Recomendada): Docker\par
+\par
+1. Abrir terminal en:\par
+   `D:\\\\integrador2\\\\backend\\\\manto-backend`\par
+\par
+2. Levantar PostgreSQL:\par
+```powershell\par
+docker compose up -d\par
+```\par
+\par
+3. Verificar contenedor:\par
+```powershell\par
+docker ps\par
+```\par
+Debe aparecer `guardian-postgres`.\par
+\par
+4. Credenciales que crea Docker Compose:\par
+- DB: `guardian_db`\par
+- Usuario: `guardian_user`\par
+- Password: `guardian_pass`\par
+\par
+## Opcion B: Instalacion local de PostgreSQL\par
+\par
+1. Instalar PostgreSQL 16.\par
+2. Crear base de datos y usuario segun tu estrategia.\par
+\par
+Ejemplo SQL:\par
+```sql\par
+CREATE DATABASE guardian_db;\par
+CREATE USER guardian_user WITH PASSWORD 'guardian_pass';\par
+GRANT ALL PRIVILEGES ON DATABASE guardian_db TO guardian_user;\par
+```\par
+\par
+## Punto critico de configuracion (muy importante)\par
+\par
+Tu `application.yml` actual del backend tiene:\par
+- `username: postgres`\par
+- `password: 12345678`\par
+\par
+Pero `docker-compose.yml` crea:\par
+- `guardian_user / guardian_pass`\par
+\par
+Debes alinear ambos lados. Tienes 2 caminos:\par
+\par
+1. **Editar `application.yml`** para usar `guardian_user/guardian_pass`.\par
+2. Mantener `application.yml` como esta y crear ese usuario/password en tu PostgreSQL local.\par
+\par
+Si no alineas esto, fallara la conexion a DB.\par
+\par
+---\par
+\par
+## 3) Manual Backend (Paso a paso)\par
+\par
+## 3.1 Requisitos previos\par
+- Tener JDK 21 instalado.\par
+- Tener Docker Desktop (si usaras DB en contenedor).\par
+\par
+Verificaciones:\par
+```powershell\par
+java --version\par
+```\par
+Debe mostrar Java 21.\par
+\par
+## 3.2 Ubicarse en backend\par
+```powershell\par
+cd D:\\\\integrador2\\\\backend\\\\manto-backend\par
+```\par
+\par
+## 3.3 Configurar secretos / integraciones\par
+\par
+Archivo principal:\par
+- `src/main/resources/application.yml`\par
+\par
+Valores importantes:\par
+- `server.port: 8080`\par
+- `spring.datasource.*`\par
+- `firebase.service-account-path`\par
+- `google.safe-browsing.api-key`\par
+\par
+Recomendacion de buenas practicas:\par
+- No dejar API keys reales hardcodeadas.\par
+- Mover API keys a variables de entorno.\par
+\par
+Variables utiles:\par
+- `FIREBASE_SERVICE_ACCOUNT_PATH`\par
+- `GOOGLE_SAFE_BROWSING_ENABLED`\par
+- `GOOGLE_SAFE_BROWSING_API_KEY`\par
+- `GOOGLE_DRIVE_ENABLED`\par
+- `GOOGLE_DRIVE_SERVICE_ACCOUNT_PATH`\par
+\par
+## 3.4 Levantar backend\par
+\par
+1. Levantar DB (si aplica):\par
+```powershell\par
+docker compose up -d\par
+```\par
+\par
+2. Ejecutar backend:\par
+```powershell\par
+.\\\\mvnw.cmd spring-boot:run\par
+```\par
+\par
+## 3.5 Validar backend\par
+\par
+Probar Swagger UI:\par
+- `http://localhost:8080/swagger-ui/index.html`\par
+\par
+Probar endpoint de registro usuario:\par
+- `POST http://localhost:8080/api/v1/users`\par
+\par
+Body ejemplo:\par
+```json\par
+\\{\par
+  "name": "Usuario Demo",\par
+  "email": "demo@manto.com",\par
+  "phone": "+51999999999"\par
+\\}\par
+```\par
+\par
+Probar analisis URL:\par
+- `POST http://localhost:8080/api/v1/threats/url/analyze`\par
+\par
+Body ejemplo:\par
+```json\par
+\\{\par
+  "url": "http://testsafebrowsing.appspot.com/apiv4/ANY_PLATFORM/SOCIAL_ENGINEERING/URL/"\par
+\\}\par
+```\par
+\par
+---\par
+\par
+## 4) Manual Android Studio (Paso a paso)\par
+\par
+## 4.1 Requisitos previos\par
+- Android Studio instalado.\par
+- Android SDK Platform 36.\par
+- Emulador o dispositivo fisico.\par
+- JDK 21 disponible.\par
+\par
+## 4.2 Abrir proyecto\par
+1. Abrir Android Studio.\par
+2. `Open` -> `D:\\\\integrador2\\\\MOBILE`.\par
+\par
+## 4.3 Configurar JDK de Gradle\par
+\par
+En el proyecto existe:\par
+- `gradle.properties` con:\par
+  `org.gradle.java.home=C:/Program Files/Java/jdk-21`\par
+\par
+Verifica que la ruta exista realmente.\par
+\par
+Error comun:\par
+- `Value 'C:Program FilesJavajdk-21binjava.exe' ... invalid`\par
+\par
+Causa:\par
+- Ruta mal escrita (sin `/` o `\\\\`).\par
+\par
+Solucion:\par
+- Usar exactamente: `C:/Program Files/Java/jdk-21`\par
+\par
+## 4.4 Verificar Firebase en Android\par
+\par
+Archivo requerido:\par
+- `app/google-services.json`\par
+\par
+El proyecto ya lo referencia con plugin:\par
+- `com.google.gms.google-services`\par
+\par
+## 4.5 Configurar URL del backend en Android\par
+\par
+Archivo:\par
+- `app/src/main/java/com/guardianapp/mobile/data/api/RetrofitClient.java`\par
+\par
+Variable:\par
+- `BASE_URL`\par
+\par
+Reglas obligatorias:\par
+1. Debe terminar en `/`\par
+2. Si usas ngrok, usar URL `https://...ngrok-free.app/`\par
+\par
+Ejemplo correcto:\par
+```java\par
+private static final String BASE_URL = "https://xxxx-xx-xxx-xxx-xx.ngrok-free.app/";\par
+```\par
+\par
+Error comun:\par
+- `IllegalArgumentException: baseUrl must end in /`\par
+\par
+Solucion:\par
+- Agregar `/` al final.\par
+\par
+## 4.6 Compilar APK debug\par
+\par
+En terminal del proyecto Android:\par
+```powershell\par
+cd D:\\\\integrador2\\\\MOBILE\par
+.\\\\gradlew.bat :app:assembleDebug\par
+```\par
+\par
+APK generado en:\par
+- `app\\\\build\\\\outputs\\\\apk\\\\debug\\\\app-debug.apk`\par
+\par
+---\par
+\par
+## 5) Conexion Android <-> Backend con ngrok\par
+\par
+Usar cuando pruebas en dispositivo fisico o emulador externo.\par
+\par
+1. Ejecutar backend en `localhost:8080`.\par
+2. En otra terminal:\par
+```powershell\par
+ngrok http 8080\par
+```\par
+3. Copiar URL HTTPS publica de ngrok.\par
+4. Pegarla en `RetrofitClient.BASE_URL` con `/` final.\par
+5. Reinstalar/ejecutar app.\par
+\par
+Errores comunes:\par
+- `502 Bad Gateway`: backend caido o ngrok apuntando a puerto incorrecto.\par
+- `404 Not Found`: endpoint incorrecto o ruta mal armada.\par
+- `Network error`: URL vencida de ngrok o conectividad.\par
+\par
+---\par
+\par
+## 6) Pruebas Minimas Recomendadas (Smoke Test)\par
+\par
+## Backend (Insomnia/Postman)\par
+1. Crear usuario:\par
+- `POST /api/v1/users`\par
+\par
+2. Analizar URL sospechosa:\par
+- `POST /api/v1/threats/url/analyze`\par
+\par
+3. Registrar URL en blacklist:\par
+- `POST /api/v1/blacklist/urls`\par
+\par
+## Android\par
+1. Login/registro en app.\par
+2. Navegar a Escudo de Enlaces.\par
+3. Analizar URL phishing de prueba.\par
+4. Confirmar respuesta en UI.\par
+\par
+---\par
+\par
+## 7) Checklist final de entorno\par
+\par
+- [ ] JDK 21 instalado\par
+- [ ] PostgreSQL 16 activo (Docker o local)\par
+- [ ] Credenciales DB alineadas entre backend y PostgreSQL\par
+- [ ] Backend arriba en puerto 8080\par
+- [ ] ngrok activo (si aplica)\par
+- [ ] `BASE_URL` Android actualizado con `/` final\par
+- [ ] `google-services.json` presente\par
+- [ ] `assembleDebug` exitoso\par
+\par
+---\par
+\par
+## 8) Nota sobre login\par
+\par
+En esta arquitectura, la autenticacion principal del lado movil se apoya en Firebase (cliente Android).\par
+El backend expone operaciones de usuarios (`/api/v1/users`) pero no un endpoint clasico de login con password.\par
+\par
+}

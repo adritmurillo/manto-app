@@ -321,7 +321,10 @@ public class HomeActivity extends AppCompatActivity {
     }
 
     private void routeSecondaryHostToDashboard() {
-        routeToDashboardWithRetry(true, 0);
+        Intent intent = new Intent(HomeActivity.this, HostDashboardActivity.class);
+        intent.putExtra("HOST_ID", currentUserIdPostgres);
+        startActivity(intent);
+        finish();
     }
 
     private void routeProtectedToDashboardWithRetry() {

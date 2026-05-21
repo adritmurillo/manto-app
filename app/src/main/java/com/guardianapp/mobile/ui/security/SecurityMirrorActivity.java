@@ -17,6 +17,7 @@ import com.guardianapp.mobile.data.api.CreateSmsThreatAlertRequest;
 import com.guardianapp.mobile.data.api.RetrofitClient;
 import com.guardianapp.mobile.data.api.SmsThreatAlertResponse;
 import com.guardianapp.mobile.data.threat.ThreatAnalysisRepository;
+import com.guardianapp.mobile.ui.common.FamilyAccessGuard;
 import com.guardianapp.mobile.ui.host.FamilyCircleActivity;
 import com.guardianapp.mobile.ui.host.HostDashboardActivity;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
@@ -41,6 +42,8 @@ public class SecurityMirrorActivity extends AppCompatActivity {
     private String hostId;
     private String protectedUserId;
     private String linkId;
+    private final android.os.Handler familyGuardHandler = new android.os.Handler(android.os.Looper.getMainLooper());
+    private Runnable familyGuardRunnable;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -121,6 +124,18 @@ public class SecurityMirrorActivity extends AppCompatActivity {
         }
 
         renderItems(FilterType.ALL);
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        startFamilyGuard();
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        stopFamilyGuard();
     }
 
     private void analyzeCustomInput() {
@@ -265,5 +280,27 @@ public class SecurityMirrorActivity extends AppCompatActivity {
         ALL,
         BLOCKED,
         SUSPICIOUS
+    }
+
+    private void startFamilyGuard() {
+        if (hostId == null || hostId.isBlank()) {
+            return;
+        }
+        stopFamilyGuard();
+        familyGuardRunnable = new Runnable() {
+            @Override
+            public void run() {
+                FamilyAccessGuard.ensureInFamily(SecurityMirrorActivity.this, hostId, () ->
+                        familyGuardHandler.postDelayed(this, 5000L)
+                );
+            }
+        };
+        familyGuardHandler.post(familyGuardRunnable);
+    }
+
+    private void stopFamilyGuard() {
+        if (familyGuardRunnable != null) {
+            familyGuardHandler.removeCallbacks(familyGuardRunnable);
+        }
     }
 }

@@ -38,6 +38,7 @@ import com.guardianapp.mobile.data.api.SmsThreatAlertResponse;
 import com.guardianapp.mobile.data.realtime.StompRealtimeClient;
 import com.guardianapp.mobile.service.EmergencyLiveAudioService;
 import com.guardianapp.mobile.ui.main.MainActivity;
+import com.guardianapp.mobile.ui.common.FamilyAccessGuard;
 import com.guardianapp.mobile.ui.host.FamilyCircleActivity;
 import com.guardianapp.mobile.ui.security.LinkShieldActivity;
 import com.guardianapp.mobile.ui.security.SecurityMirrorActivity;
@@ -74,6 +75,8 @@ public class HostDashboardActivity extends AppCompatActivity {
     private final StompRealtimeClient emergencyRealtimeClient = new StompRealtimeClient();
     private final Handler audioHealthHandler = new Handler(Looper.getMainLooper());
     private Runnable audioHealthRunnable;
+    private final Handler familyGuardHandler = new Handler(Looper.getMainLooper());
+    private Runnable familyGuardRunnable;
     private String pendingMapEmergencyId;
     private EmergencyAlertResponse pendingMapEmergency;
 
@@ -169,6 +172,7 @@ public class HostDashboardActivity extends AppCompatActivity {
         startPolling();
 
         connectRealtime();
+        startFamilyGuard();
     }
 
     private void connectRealtime() {
@@ -800,11 +804,43 @@ public class HostDashboardActivity extends AppCompatActivity {
     @Override
     protected void onDestroy() {
         super.onDestroy();
+        stopFamilyGuard();
         EmergencyLiveAudioService.stop(this);
         stopEmergencyAudioPlayback();
         stopAudioHealthCheck();
         stopPolling();
         linkRealtimeClient.disconnect();
         emergencyRealtimeClient.disconnect();
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        startFamilyGuard();
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        stopFamilyGuard();
+    }
+
+    private void startFamilyGuard() {
+        stopFamilyGuard();
+        familyGuardRunnable = new Runnable() {
+            @Override
+            public void run() {
+                FamilyAccessGuard.ensureInFamily(HostDashboardActivity.this, miIdAnfitrion, () ->
+                        familyGuardHandler.postDelayed(this, 5000L)
+                );
+            }
+        };
+        familyGuardHandler.post(familyGuardRunnable);
+    }
+
+    private void stopFamilyGuard() {
+        if (familyGuardRunnable != null) {
+            familyGuardHandler.removeCallbacks(familyGuardRunnable);
+        }
     }
 }
