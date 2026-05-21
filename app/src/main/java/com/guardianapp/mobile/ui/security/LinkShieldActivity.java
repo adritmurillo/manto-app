@@ -24,6 +24,7 @@ import java.util.Locale;
 public class LinkShieldActivity extends AppCompatActivity {
 
     private final LinkShieldRepository repository = new LinkShieldRepository();
+    private final LinkShieldAdapter adapter = new LinkShieldAdapter();
 
     private String hostId;
     private EditText etAnalyzeUrl;
@@ -43,12 +44,19 @@ public class LinkShieldActivity extends AppCompatActivity {
         tvAnalysisResult = findViewById(R.id.tvAnalysisResult);
         btnAnalyzeLink = findViewById(R.id.btnAnalyzeLink);
         btnBlockDomain = findViewById(R.id.btnBlockDomain);
+        androidx.recyclerview.widget.RecyclerView rvBlocked = findViewById(R.id.rvLinkShieldBlocked);
+        if (rvBlocked != null) {
+            rvBlocked.setLayoutManager(new androidx.recyclerview.widget.LinearLayoutManager(this));
+            rvBlocked.setAdapter(adapter);
+        }
 
         findViewById(R.id.btnBackShield).setOnClickListener(v -> finish());
         btnAnalyzeLink.setOnClickListener(v -> analyzeUrl());
         btnBlockDomain.setOnClickListener(v -> blockDomain());
+        adapter.setOnUnblockClickListener((item, position) -> unblockDomain(item));
 
         setupBottomNavigation();
+        refreshBlockedList();
     }
 
     private void setupBottomNavigation() {
@@ -169,6 +177,7 @@ public class LinkShieldActivity extends AppCompatActivity {
                 ));
                 tvAnalysisResult.setText("Dominio bloqueado en lista negra:\n" + (data.getUrl() != null ? data.getUrl() : normalizedUrl));
                 Toast.makeText(LinkShieldActivity.this, "Dominio bloqueado correctamente", Toast.LENGTH_SHORT).show();
+                refreshBlockedList();
             }
 
             @Override
@@ -185,6 +194,35 @@ public class LinkShieldActivity extends AppCompatActivity {
                 Toast.makeText(LinkShieldActivity.this, "No se pudo bloquear: " + error.getMessage(), Toast.LENGTH_LONG).show();
             }
         });
+    }
+
+    private void unblockDomain(SecurityAnalysisItem item) {
+        String url = item != null ? item.getUrl() : null;
+        String normalizedUrl = normalizeUrl(url);
+        if (normalizedUrl == null) {
+            Toast.makeText(this, "URL invalida", Toast.LENGTH_SHORT).show();
+            return;
+        }
+        repository.removeBlacklistUrl(normalizedUrl, new LinkShieldRepository.ResultCallback<Void>() {
+            @Override
+            public void onSuccess(Void data) {
+                SecurityAnalysisStore.removeByUrl(normalizedUrl);
+                Toast.makeText(LinkShieldActivity.this, "Dominio desbloqueado", Toast.LENGTH_SHORT).show();
+                refreshBlockedList();
+            }
+
+            @Override
+            public void onError(Throwable error) {
+                Toast.makeText(LinkShieldActivity.this, "No se pudo desbloquear", Toast.LENGTH_SHORT).show();
+            }
+        });
+    }
+
+    private void refreshBlockedList() {
+        List<SecurityAnalysisItem> items = SecurityAnalysisStore.getAll().stream()
+                .filter(SecurityAnalysisItem::isBlocked)
+                .toList();
+        adapter.setItems(items);
     }
 
     private String normalizeUrl(String raw) {

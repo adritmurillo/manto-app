@@ -33,6 +33,9 @@ public interface GuardianApiService {
     @POST("api/v1/blacklist/urls")
     Call<RegisterBlacklistUrlResponse> registerBlacklistUrl(@Body RegisterBlacklistUrlRequest request);
 
+    @retrofit2.http.DELETE("api/v1/blacklist/urls")
+    Call<Void> removeBlacklistUrl(@Body RegisterBlacklistUrlRequest request);
+
 
     // Registro (El que ya tenías)
     @POST("api/v1/users")
@@ -63,6 +66,13 @@ public interface GuardianApiService {
             @Path("familyId") String familyId,
             @Header("X-User-Id") String requesterUserId,
             @Body AddFamilyMemberRequest request
+    );
+
+    @retrofit2.http.DELETE("api/v1/families/{familyId}/members/{memberUserId}")
+    Call<FamilyGroupResponse> removeFamilyMember(
+            @Path("familyId") String familyId,
+            @Path("memberUserId") String memberUserId,
+            @Header("X-User-Id") String requesterUserId
     );
 
     @POST("api/v1/family-invitations/families/{familyId}")

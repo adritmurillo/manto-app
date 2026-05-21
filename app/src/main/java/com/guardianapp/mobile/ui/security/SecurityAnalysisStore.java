@@ -35,4 +35,11 @@ public final class SecurityAnalysisStore {
         }
         return count;
     }
+
+    public static synchronized void removeByUrl(String url) {
+        if (url == null || url.isBlank()) {
+            return;
+        }
+        ITEMS.removeIf(item -> url.equalsIgnoreCase(item.getUrl()));
+    }
 }

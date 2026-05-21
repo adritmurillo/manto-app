@@ -21,6 +21,15 @@ public class LinkShieldAdapter extends RecyclerView.Adapter<LinkShieldAdapter.Vi
 
     private final List<SecurityAnalysisItem> items = new ArrayList<>();
     private final SimpleDateFormat dtFormat = new SimpleDateFormat("dd MMM yyyy, HH:mm", Locale.getDefault());
+    private OnUnblockClickListener unblockClickListener;
+
+    public interface OnUnblockClickListener {
+        void onUnblock(SecurityAnalysisItem item, int position);
+    }
+
+    public void setOnUnblockClickListener(OnUnblockClickListener listener) {
+        this.unblockClickListener = listener;
+    }
 
     public void setItems(List<SecurityAnalysisItem> newItems) {
         items.clear();
@@ -49,16 +58,26 @@ public class LinkShieldAdapter extends RecyclerView.Adapter<LinkShieldAdapter.Vi
             holder.tvStatus.setBackgroundResource(R.drawable.bg_chip_safe);
             holder.btnAction.setText("Confiable");
             holder.btnAction.setEnabled(false);
+            holder.btnAction.setOnClickListener(null);
         } else if (item.isBlocked()) {
             holder.tvStatus.setText(item.getStatus());
             holder.tvStatus.setBackgroundResource(R.drawable.bg_chip_danger);
-            holder.btnAction.setText("Bloqueado");
-            holder.btnAction.setEnabled(false);
+            holder.btnAction.setText("Desbloquear");
+            holder.btnAction.setEnabled(true);
+            holder.btnAction.setOnClickListener(v -> {
+                if (unblockClickListener != null) {
+                    int adapterPosition = holder.getAdapterPosition();
+                    if (adapterPosition != RecyclerView.NO_POSITION) {
+                        unblockClickListener.onUnblock(item, adapterPosition);
+                    }
+                }
+            });
         } else {
             holder.tvStatus.setText(item.getStatus());
             holder.tvStatus.setBackgroundResource(R.drawable.bg_chip_neutral);
             holder.btnAction.setText("Revisado");
             holder.btnAction.setEnabled(false);
+            holder.btnAction.setOnClickListener(null);
         }
     }
 

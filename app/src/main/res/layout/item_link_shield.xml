@@ -60,6 +60,6 @@
         android:id="@+id/btnShieldAction"
         android:layout_width="wrap_content"
         android:layout_height="36dp"
-        android:text="Bloqueado"
+        android:text="Desbloquear"
         android:textSize="11sp" />
 </LinearLayout>

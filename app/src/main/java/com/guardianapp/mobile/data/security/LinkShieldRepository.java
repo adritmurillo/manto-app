@@ -68,4 +68,23 @@ public class LinkShieldRepository {
             }
         });
     }
+
+    public void removeBlacklistUrl(String url, ResultCallback<Void> callback) {
+        RegisterBlacklistUrlRequest request = new RegisterBlacklistUrlRequest(url);
+        RetrofitClient.getApiService().removeBlacklistUrl(request).enqueue(new Callback<Void>() {
+            @Override
+            public void onResponse(Call<Void> call, Response<Void> response) {
+                if (!response.isSuccessful()) {
+                    callback.onError(new ApiFailure(response.code(), "Blacklist delete error: " + response.code()));
+                    return;
+                }
+                callback.onSuccess(null);
+            }
+
+            @Override
+            public void onFailure(Call<Void> call, Throwable t) {
+                callback.onError(t);
+            }
+        });
+    }
 }
