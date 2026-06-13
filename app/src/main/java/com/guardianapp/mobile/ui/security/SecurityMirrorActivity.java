@@ -1,6 +1,8 @@
 package com.guardianapp.mobile.ui.security;
 
+import android.Manifest;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.Button;
@@ -8,15 +10,15 @@ import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.guardianapp.mobile.R;
-import com.guardianapp.mobile.data.api.CreateSmsThreatAlertRequest;
-import com.guardianapp.mobile.data.api.RetrofitClient;
-import com.guardianapp.mobile.data.api.SmsThreatAlertResponse;
-import com.guardianapp.mobile.data.threat.ThreatAnalysisRepository;
+import com.guardianapp.mobile.sms.SmsRoleHelper;
+import com.guardianapp.mobile.sms.SmsThreatProcessor;
 import com.guardianapp.mobile.ui.common.FamilyAccessGuard;
 import com.guardianapp.mobile.ui.host.FamilyCircleActivity;
 import com.guardianapp.mobile.ui.host.HostDashboardActivity;
@@ -26,22 +28,20 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 
-import retrofit2.Call;
-import retrofit2.Callback;
-import retrofit2.Response;
-
 public class SecurityMirrorActivity extends AppCompatActivity {
 
-    private final ThreatAnalysisRepository threatAnalysisRepository = new ThreatAnalysisRepository();
+    private static final int REQUEST_SMS_PERMISSIONS = 2001;
     private final SecurityMirrorAdapter adapter = new SecurityMirrorAdapter();
 
     private EditText etSender;
     private EditText etMessage;
     private EditText etUrl;
     private TextView tvSectionTitle;
+    private TextView tvMirrorSummary;
+    private TextView tvSmsRoleStatus;
+    private Button btnRequestDefaultSms;
+    private View layoutSmsRoleCard;
     private String hostId;
-    private String protectedUserId;
-    private String linkId;
     private final android.os.Handler familyGuardHandler = new android.os.Handler(android.os.Looper.getMainLooper());
     private Runnable familyGuardRunnable;
 
@@ -49,14 +49,17 @@ public class SecurityMirrorActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_security_mirror);
+        SecurityAnalysisStore.init(getApplicationContext());
         hostId = getIntent() != null ? getIntent().getStringExtra("HOST_ID") : null;
-        protectedUserId = getIntent() != null ? getIntent().getStringExtra("PROTECTED_ID") : null;
-        linkId = getIntent() != null ? getIntent().getStringExtra("LINK_ID") : null;
 
         etSender = findViewById(R.id.etMirrorSender);
         etMessage = findViewById(R.id.etMirrorMessage);
         etUrl = findViewById(R.id.etMirrorUrl);
         tvSectionTitle = findViewById(R.id.tvMirrorSectionTitle);
+        tvMirrorSummary = findViewById(R.id.tvMirrorSummary);
+        tvSmsRoleStatus = findViewById(R.id.tvSmsRoleStatus);
+        btnRequestDefaultSms = findViewById(R.id.btnRequestDefaultSms);
+        layoutSmsRoleCard = findViewById(R.id.layoutSmsRoleCard);
 
         RecyclerView rv = findViewById(R.id.rvSecurityMirror);
         rv.setLayoutManager(new LinearLayoutManager(this));
@@ -79,10 +82,32 @@ public class SecurityMirrorActivity extends AppCompatActivity {
         btnPhishing.setOnClickListener(v -> simulatePhishing());
         btnWhitelist.setOnClickListener(v -> simulateWhitelist());
         btnAnalyzeCustom.setOnClickListener(v -> analyzeCustomInput());
+        btnRequestDefaultSms.setOnClickListener(v -> {
+            if (!hasSmsPermissions()) {
+                ActivityCompat.requestPermissions(
+                        this,
+                        new String[]{
+                                Manifest.permission.RECEIVE_SMS,
+                                Manifest.permission.READ_SMS
+                        },
+                        REQUEST_SMS_PERMISSIONS
+                );
+                return;
+            }
+            if (!SmsRoleHelper.canRequestDefaultRole(this)) {
+                Toast.makeText(this, "Este dispositivo no permite configurar rol SMS desde aqui.", Toast.LENGTH_SHORT).show();
+                return;
+            }
+            if (SmsRoleHelper.isDefaultSmsApp(this)) {
+                Toast.makeText(this, "Manto ya es la app SMS predeterminada.", Toast.LENGTH_SHORT).show();
+                return;
+            }
+            SmsRoleHelper.requestDefaultSmsRole(this);
+        });
 
         chipTodos.setOnClickListener(v -> renderItems(FilterType.ALL));
-        chipBloqueados.setOnClickListener(v -> renderItems(FilterType.BLOCKED));
-        chipSospechosos.setOnClickListener(v -> renderItems(FilterType.SUSPICIOUS));
+        chipBloqueados.setOnClickListener(v -> renderItems(FilterType.INBOX));
+        chipSospechosos.setOnClickListener(v -> renderItems(FilterType.QUARANTINE));
 
         if (bottomNav != null) {
             bottomNav.setSelectedItemId(R.id.nav_security);
@@ -123,12 +148,16 @@ public class SecurityMirrorActivity extends AppCompatActivity {
             });
         }
 
+        layoutSmsRoleCard.setVisibility(hostId == null || hostId.isBlank() ? View.VISIBLE : View.GONE);
+        updateSmsRoleUi();
         renderItems(FilterType.ALL);
     }
 
     @Override
     protected void onResume() {
         super.onResume();
+        updateSmsRoleUi();
+        renderItems(FilterType.ALL);
         startFamilyGuard();
     }
 
@@ -136,6 +165,20 @@ public class SecurityMirrorActivity extends AppCompatActivity {
     protected void onPause() {
         super.onPause();
         stopFamilyGuard();
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        if (requestCode == REQUEST_SMS_PERMISSIONS) {
+            updateSmsRoleUi();
+            boolean granted = hasSmsPermissions();
+            Toast.makeText(
+                    this,
+                    granted ? "Permisos SMS concedidos." : "Permisos SMS denegados.",
+                    Toast.LENGTH_SHORT
+            ).show();
+        }
     }
 
     private void analyzeCustomInput() {
@@ -171,27 +214,22 @@ public class SecurityMirrorActivity extends AppCompatActivity {
 
     private void analyzeAndStore(String sender, String message, String url) {
         Toast.makeText(this, "Analizando mensaje...", Toast.LENGTH_SHORT).show();
-        threatAnalysisRepository.analyzeMessageAndUrl(message, url, sender, new ThreatAnalysisRepository.CallbackResult() {
+        SmsThreatProcessor.processIncomingMessage(getApplicationContext(), sender, message, url, new SmsThreatProcessor.ResultCallback() {
             @Override
-            public void onResult(ThreatAnalysisRepository.ThreatDecision decision) {
+            public void onProcessed(SmsThreatProcessor.ProcessResult result) {
                 runOnUiThread(() -> {
-                    SecurityAnalysisStore.add(new SecurityAnalysisItem(
-                            System.currentTimeMillis(),
-                            SecurityAnalysisItem.CHANNEL_SMS,
-                            sender,
-                            message,
-                            decision.getAnalyzedUrl() != null ? decision.getAnalyzedUrl() : url,
-                            decision.getUrlStatus(),
-                            decision.getReason(),
-                            decision.isBlocked(),
-                            decision.isWhitelisted(),
-                            decision.getTrustedProvider()
-                    ));
-                    maybeCreateHostAlert(sender, message, url, decision);
                     renderItems(FilterType.ALL);
-                    String outcome = decision.isWhitelisted()
-                            ? "Mensaje marcado en lista blanca."
-                            : (decision.isBlocked() ? "Mensaje bloqueado por seguridad." : "Mensaje analizado sin bloqueo.");
+                    SecurityAnalysisItem item = result.getItem();
+                    String outcome;
+                    if ("NO_URL".equals(normalize(item.getStatus()))) {
+                        outcome = "SMS recibido sin URL. Se guardo solo como registro local.";
+                    } else if (item.isWhitelisted()) {
+                        outcome = "Mensaje marcado en lista blanca.";
+                    } else if (item.isBlocked()) {
+                        outcome = "Mensaje bloqueado por seguridad.";
+                    } else {
+                        outcome = "Mensaje analizado sin bloqueo.";
+                    }
                     Toast.makeText(SecurityMirrorActivity.this, outcome, Toast.LENGTH_SHORT).show();
                 });
             }
@@ -205,53 +243,6 @@ public class SecurityMirrorActivity extends AppCompatActivity {
         });
     }
 
-    private void maybeCreateHostAlert(String sender,
-                                      String message,
-                                      String fallbackUrl,
-                                      ThreatAnalysisRepository.ThreatDecision decision) {
-        if (!decision.isBlocked()) {
-            return;
-        }
-        if (linkId == null || linkId.isBlank() || protectedUserId == null || protectedUserId.isBlank()) {
-            Toast.makeText(this, "Phishing detectado localmente, pero falta LINK_ID/PROTECTED_ID para alertar al anfitrion.", Toast.LENGTH_LONG).show();
-            return;
-        }
-        String analyzedUrl = decision.getAnalyzedUrl() != null ? decision.getAnalyzedUrl() : fallbackUrl;
-        CreateSmsThreatAlertRequest request = new CreateSmsThreatAlertRequest(
-                linkId,
-                protectedUserId,
-                sender == null ? "unknown" : sender,
-                message == null ? "" : message,
-                analyzedUrl == null ? "" : analyzedUrl,
-                normalizeThreatStatus(decision),
-                decision.getReason()
-        );
-        RetrofitClient.getApiService().createSmsThreatAlert(request).enqueue(new Callback<SmsThreatAlertResponse>() {
-            @Override
-            public void onResponse(Call<SmsThreatAlertResponse> call, Response<SmsThreatAlertResponse> response) {
-                if (response.isSuccessful()) {
-                    Toast.makeText(SecurityMirrorActivity.this, "Alerta enviada al anfitrion.", Toast.LENGTH_SHORT).show();
-                }
-            }
-
-            @Override
-            public void onFailure(Call<SmsThreatAlertResponse> call, Throwable t) {
-            }
-        });
-    }
-
-    private String normalizeThreatStatus(ThreatAnalysisRepository.ThreatDecision decision) {
-        String value = normalize(decision.getUrlStatus());
-        if ("PHISHING".equals(value)
-                || "MALWARE".equals(value)
-                || "UNWANTED".equals(value)
-                || "SUSPICIOUS".equals(value)
-                || "ERROR".equals(value)) {
-            return value;
-        }
-        return decision.isBlocked() ? "SUSPICIOUS" : "SAFE";
-    }
-
     private void renderItems(FilterType filterType) {
         List<SecurityAnalysisItem> source = SecurityAnalysisStore.getAll();
         List<SecurityAnalysisItem> filtered = new ArrayList<>();
@@ -259,17 +250,20 @@ public class SecurityMirrorActivity extends AppCompatActivity {
             if (!SecurityAnalysisItem.CHANNEL_SMS.equals(item.getChannel())) {
                 continue;
             }
-            if (filterType == FilterType.BLOCKED && !item.isBlocked()) {
+            if (filterType == FilterType.INBOX && !item.isInInbox()) {
                 continue;
             }
-            if (filterType == FilterType.SUSPICIOUS
-                    && ("SAFE".equals(normalize(item.getStatus())) || item.isWhitelisted())) {
+            if (filterType == FilterType.QUARANTINE && !item.isInQuarantine()) {
                 continue;
             }
             filtered.add(item);
         }
         adapter.setItems(filtered);
-        tvSectionTitle.setText(filtered.isEmpty() ? "Sin eventos todavía" : "Bloqueados por seguridad");
+        tvSectionTitle.setText(resolveSectionTitle(filterType, filtered.isEmpty()));
+        tvMirrorSummary.setText(
+                SecurityAnalysisStore.countSmsInboxItems() + " recibidos seguros, "
+                        + SecurityAnalysisStore.countSmsQuarantineItems() + " en cuarentena"
+        );
     }
 
     private String normalize(String value) {
@@ -278,8 +272,8 @@ public class SecurityMirrorActivity extends AppCompatActivity {
 
     private enum FilterType {
         ALL,
-        BLOCKED,
-        SUSPICIOUS
+        INBOX,
+        QUARANTINE
     }
 
     private void startFamilyGuard() {
@@ -302,5 +296,43 @@ public class SecurityMirrorActivity extends AppCompatActivity {
         if (familyGuardRunnable != null) {
             familyGuardHandler.removeCallbacks(familyGuardRunnable);
         }
+    }
+
+    private void updateSmsRoleUi() {
+        if (layoutSmsRoleCard != null && layoutSmsRoleCard.getVisibility() != View.VISIBLE) {
+            return;
+        }
+        if (!hasSmsPermissions()) {
+            tvSmsRoleStatus.setText(getString(R.string.sms_permission_required));
+            btnRequestDefaultSms.setEnabled(true);
+            btnRequestDefaultSms.setAlpha(1f);
+            btnRequestDefaultSms.setText(R.string.sms_permission_request);
+            return;
+        }
+        boolean isDefaultSmsApp = SmsRoleHelper.isDefaultSmsApp(this);
+        tvSmsRoleStatus.setText(isDefaultSmsApp
+                ? getString(R.string.sms_role_active)
+                : getString(R.string.sms_role_required));
+        btnRequestDefaultSms.setText(R.string.sms_role_request);
+        btnRequestDefaultSms.setEnabled(!isDefaultSmsApp);
+        btnRequestDefaultSms.setAlpha(isDefaultSmsApp ? 0.55f : 1f);
+    }
+
+    private String resolveSectionTitle(FilterType filterType, boolean empty) {
+        if (empty) {
+            return "Sin mensajes en esta bandeja";
+        }
+        if (filterType == FilterType.INBOX) {
+            return "SMS recibidos";
+        }
+        if (filterType == FilterType.QUARANTINE) {
+            return "SMS en cuarentena";
+        }
+        return "Todos los eventos SMS";
+    }
+
+    private boolean hasSmsPermissions() {
+        return ContextCompat.checkSelfPermission(this, Manifest.permission.RECEIVE_SMS) == PackageManager.PERMISSION_GRANTED
+                && ContextCompat.checkSelfPermission(this, Manifest.permission.READ_SMS) == PackageManager.PERMISSION_GRANTED;
     }
 }

@@ -1,16 +1,12 @@
 package com.guardianapp.mobile.ui.main;
 
 import android.content.Intent;
-import android.content.pm.PackageManager;
-import android.os.Build;
 import android.os.Bundle;
 import android.widget.Button;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.core.app.ActivityCompat;
-import androidx.core.content.ContextCompat;
 
 import com.google.android.material.textfield.TextInputEditText;
 import com.google.firebase.auth.FirebaseAuth;
@@ -22,6 +18,7 @@ import com.guardianapp.mobile.data.api.RetrofitClient;
 import com.guardianapp.mobile.data.api.UserResponse;
 import com.guardianapp.mobile.ui.auth.RegisterActivity;
 import com.guardianapp.mobile.ui.common.AppNavigator;
+import com.guardianapp.mobile.ui.common.StartupPermissionManager;
 import com.guardianapp.mobile.ui.host.HostDashboardActivity;
 import com.guardianapp.mobile.ui.invite.InviteEntryActivity;
 import com.guardianapp.mobile.ui.invite.PendingInviteStore;
@@ -33,7 +30,8 @@ import retrofit2.Response;
 
 public class MainActivity extends AppCompatActivity {
 
-    private static final int REQ_NOTIFICATIONS = 1001;
+    private static final int REQ_BASE_PERMISSIONS = 1001;
+    private static final int REQ_BACKGROUND_LOCATION = 1002;
 
     private TextInputEditText etEmail;
     private TextInputEditText etPassword;
@@ -46,6 +44,8 @@ public class MainActivity extends AppCompatActivity {
     protected void onStart() {
         super.onStart();
 
+        requestStartupPermissionsIfNeeded();
+
         FirebaseUser currentUser = FirebaseAuth.getInstance().getCurrentUser();
         if (currentUser != null && currentUser.getEmail() != null) {
             continueAfterFirebaseLogin(currentUser.getEmail());
@@ -57,7 +57,7 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        requestNotificationPermissionIfNeeded();
+        requestStartupPermissionsIfNeeded();
 
         mAuth = FirebaseAuth.getInstance();
 
@@ -100,21 +100,28 @@ public class MainActivity extends AppCompatActivity {
         });
     }
 
-    private void requestNotificationPermissionIfNeeded() {
-        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) {
+    @Override
+    public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        if (requestCode == REQ_BASE_PERMISSIONS) {
+            if (StartupPermissionManager.shouldRequestBackgroundLocation(this)) {
+                StartupPermissionManager.requestBackgroundLocation(this, REQ_BACKGROUND_LOCATION);
+            }
             return;
         }
-
-        if (ContextCompat.checkSelfPermission(this, android.Manifest.permission.POST_NOTIFICATIONS)
-                == PackageManager.PERMISSION_GRANTED) {
+        if (requestCode == REQ_BACKGROUND_LOCATION) {
             return;
         }
+    }
 
-        ActivityCompat.requestPermissions(
-                this,
-                new String[]{android.Manifest.permission.POST_NOTIFICATIONS},
-                REQ_NOTIFICATIONS
-        );
+    private void requestStartupPermissionsIfNeeded() {
+        if (!StartupPermissionManager.hasBasePermissions(this)) {
+            StartupPermissionManager.requestBasePermissions(this, REQ_BASE_PERMISSIONS);
+            return;
+        }
+        if (StartupPermissionManager.shouldRequestBackgroundLocation(this)) {
+            StartupPermissionManager.requestBackgroundLocation(this, REQ_BACKGROUND_LOCATION);
+        }
     }
 
     private void continueAfterFirebaseLogin(String userEmail) {
@@ -154,7 +161,7 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onResponse(Call<java.util.List<FamilyGroupResponse>> call, Response<java.util.List<FamilyGroupResponse>> response) {
                 if (!response.isSuccessful() || response.body() == null || response.body().isEmpty()) {
-                    AppNavigator.goToDeviceSetup(MainActivity.this, postgresId);
+                    resolveProtectedExtrasAndOpenDashboard(postgresId);
                     return;
                 }
 
@@ -183,7 +190,7 @@ public class MainActivity extends AppCompatActivity {
 
             @Override
             public void onFailure(Call<java.util.List<FamilyGroupResponse>> call, Throwable t) {
-                AppNavigator.goToDeviceSetup(MainActivity.this, postgresId);
+                resolveProtectedExtrasAndOpenDashboard(postgresId);
             }
         });
     }

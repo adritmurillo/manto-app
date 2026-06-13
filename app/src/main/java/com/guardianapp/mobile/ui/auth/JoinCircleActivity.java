@@ -1,9 +1,8 @@
 package com.guardianapp.mobile.ui.auth;
 
 import android.content.Intent;
+import android.net.Uri;
 import android.os.Bundle;
-import android.os.Handler;
-import android.os.Looper;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
@@ -18,7 +17,11 @@ import com.guardianapp.mobile.data.api.RetrofitClient;
 import com.guardianapp.mobile.ui.host.HostDashboardActivity;
 import com.guardianapp.mobile.ui.protecteduser.ProtectedDashboardActivity;
 
-import java.util.List;
+import org.json.JSONObject;
+
+import java.io.IOException;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import retrofit2.Call;
 import retrofit2.Callback;
@@ -31,7 +34,6 @@ public class JoinCircleActivity extends AppCompatActivity {
 
     private String userId;
     private EditText etInvitationCode;
-    private final Handler routeRetryHandler = new Handler(Looper.getMainLooper());
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -48,14 +50,16 @@ public class JoinCircleActivity extends AppCompatActivity {
 
         String prefill = getIntent() != null ? getIntent().getStringExtra(EXTRA_PREFILL_INVITE_TOKEN) : null;
         if (prefill != null && !prefill.isBlank()) {
-            etInvitationCode.setText(prefill.trim().toUpperCase());
+            etInvitationCode.setText(normalizeInvitationInput(prefill));
         }
 
         tvPersonalCode.setText(buildPersonalCode(userId));
 
         btnValidate.setOnClickListener(v -> validateCode());
         btnBack.setOnClickListener(v -> finish());
-        tvHelp.setOnClickListener(v -> Toast.makeText(this, "Solicita el código al administrador familiar", Toast.LENGTH_SHORT).show());
+        tvHelp.setOnClickListener(v ->
+                Toast.makeText(this, "Solicita el codigo al administrador familiar", Toast.LENGTH_SHORT).show()
+        );
     }
 
     private String buildPersonalCode(String value) {
@@ -71,120 +75,192 @@ public class JoinCircleActivity extends AppCompatActivity {
 
     private void validateCode() {
         if (userId == null || userId.isBlank()) {
-            Toast.makeText(this, "No se encontró el usuario", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, "No se encontro el usuario", Toast.LENGTH_SHORT).show();
             return;
         }
-        String token = etInvitationCode.getText() != null ? etInvitationCode.getText().toString().trim() : "";
+
+        String rawValue = etInvitationCode.getText() != null ? etInvitationCode.getText().toString() : "";
+        String token = normalizeInvitationInput(rawValue);
         if (token.isBlank()) {
-            Toast.makeText(this, "Ingresa el código de invitación", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, "Ingresa el codigo de invitacion", Toast.LENGTH_SHORT).show();
             return;
         }
+        etInvitationCode.setText(token);
 
         RetrofitClient.getApiService().acceptInvitation(token, userId).enqueue(new Callback<LinkResponse>() {
             @Override
             public void onResponse(Call<LinkResponse> call, Response<LinkResponse> response) {
                 if (response.isSuccessful() && response.body() != null) {
-                    LinkResponse link = response.body();
-                    Toast.makeText(JoinCircleActivity.this, "Código validado", Toast.LENGTH_SHORT).show();
-                    Intent intent = new Intent(JoinCircleActivity.this, ProtectedDashboardActivity.class);
-                    intent.putExtra("PROTECTED_ID", userId);
-                    intent.putExtra("LINK_ID", link.getId());
-                    startActivity(intent);
-                    finish();
-                } else {
-                    tryAcceptFamilyInvitation(token);
+                    Toast.makeText(JoinCircleActivity.this, "Codigo validado", Toast.LENGTH_SHORT).show();
+                    openProtectedDashboard(response.body().getId());
+                    return;
                 }
+
+                String invitationError = buildInviteErrorMessage(response);
+                tryAcceptFamilyInvitation(token, invitationError);
             }
 
             @Override
             public void onFailure(Call<LinkResponse> call, Throwable t) {
-                tryAcceptFamilyInvitation(token);
+                tryAcceptFamilyInvitation(token, "Error de red validando el codigo");
             }
         });
     }
 
-    private void tryAcceptFamilyInvitation(String token) {
+    private void tryAcceptFamilyInvitation(String token, String previousError) {
         RetrofitClient.getApiService().acceptFamilyInvitation(token, userId)
                 .enqueue(new Callback<FamilyGroupResponse>() {
                     @Override
                     public void onResponse(Call<FamilyGroupResponse> call, Response<FamilyGroupResponse> response) {
-                        if (response.isSuccessful() && response.body() != null) {
-                            Toast.makeText(JoinCircleActivity.this, "Te uniste al círculo familiar", Toast.LENGTH_SHORT).show();
-                            String role = null;
-                            if (response.body().getMembers() != null) {
-                                for (FamilyGroupResponse.MemberResponse member : response.body().getMembers()) {
-                                    if (member != null && userId.equals(member.getUserId())) {
-                                        role = member.getRole();
-                                        break;
-                                    }
-                                }
-                            }
+                        if (response.isSuccessful()) {
+                            String role = extractJoinedRole(response.body());
+                            Toast.makeText(JoinCircleActivity.this, "Te uniste al circulo familiar", Toast.LENGTH_SHORT).show();
+
                             if ("SECONDARY_HOST".equals(role)) {
                                 Intent intent = new Intent(JoinCircleActivity.this, HostDashboardActivity.class);
                                 intent.putExtra("HOST_ID", userId);
                                 startActivity(intent);
                                 finish();
                             } else {
-                                routeToDashboardWithRetry(false, 0);
+                                openProtectedDashboard(null);
                             }
-                        } else {
-                            Toast.makeText(JoinCircleActivity.this, "Código inválido o expirado", Toast.LENGTH_SHORT).show();
+                            return;
                         }
+
+                        String familyError = buildInviteErrorMessage(response);
+                        Toast.makeText(JoinCircleActivity.this, selectBestError(previousError, familyError), Toast.LENGTH_LONG).show();
                     }
 
                     @Override
                     public void onFailure(Call<FamilyGroupResponse> call, Throwable t) {
-                        Toast.makeText(JoinCircleActivity.this, "Error de red", Toast.LENGTH_SHORT).show();
+                        Toast.makeText(JoinCircleActivity.this, previousError, Toast.LENGTH_LONG).show();
                     }
                 });
     }
 
-    private void routeToDashboardWithRetry(boolean activeGoesToHostDashboard, int attempt) {
-        RetrofitClient.getApiService().getMyLinks(userId).enqueue(new Callback<List<LinkResponse>>() {
-            @Override
-            public void onResponse(Call<List<LinkResponse>> call, Response<List<LinkResponse>> response) {
-                if (response.isSuccessful() && response.body() != null) {
-                    LinkResponse active = null;
-                    for (LinkResponse link : response.body()) {
-                        if (!userId.equals(link.getProtectedUserId())) {
-                            continue;
-                        }
-                        if (active == null && "ACTIVE".equals(link.getStatus())) {
-                            active = link;
-                        }
-                    }
+    private String extractJoinedRole(FamilyGroupResponse group) {
+        if (group == null || group.getMembers() == null) {
+            return null;
+        }
+        for (FamilyGroupResponse.MemberResponse member : group.getMembers()) {
+            if (member != null && userId.equals(member.getUserId())) {
+                return member.getRole();
+            }
+        }
+        return null;
+    }
 
-                    if (active != null) {
-                        Intent intent;
-                        if (activeGoesToHostDashboard) {
-                            intent = new Intent(JoinCircleActivity.this, HostDashboardActivity.class);
-                            intent.putExtra("HOST_ID", userId);
-                        } else {
-                            intent = new Intent(JoinCircleActivity.this, ProtectedDashboardActivity.class);
-                            intent.putExtra("PROTECTED_ID", userId);
-                            intent.putExtra("LINK_ID", active.getId());
-                        }
-                        startActivity(intent);
-                        finish();
-                        return;
-                    }
-                }
+    private void openProtectedDashboard(String linkId) {
+        Intent intent = new Intent(this, ProtectedDashboardActivity.class);
+        intent.putExtra("PROTECTED_ID", userId);
+        if (linkId != null && !linkId.isBlank()) {
+            intent.putExtra("LINK_ID", linkId);
+        }
+        startActivity(intent);
+        finish();
+    }
 
-                if (attempt < 6) {
-                    routeRetryHandler.postDelayed(() -> routeToDashboardWithRetry(activeGoesToHostDashboard, attempt + 1), 600L);
-                } else {
-                    Toast.makeText(JoinCircleActivity.this, "No se pudo resolver el vínculo todavía", Toast.LENGTH_SHORT).show();
+    private String normalizeInvitationInput(String rawValue) {
+        if (rawValue == null) {
+            return "";
+        }
+
+        String value = rawValue.trim();
+        if (value.isBlank()) {
+            return "";
+        }
+
+        try {
+            Uri uri = Uri.parse(value);
+            String queryToken = uri.getQueryParameter("token");
+            if (queryToken != null && !queryToken.isBlank()) {
+                return queryToken.trim();
+            }
+            String lastPathSegment = uri.getLastPathSegment();
+            if (looksLikeToken(lastPathSegment)) {
+                return lastPathSegment.trim();
+            }
+        } catch (Exception ignored) {
+        }
+
+        Pattern pattern = Pattern.compile("([A-Za-z0-9_-]{6,})");
+        Matcher matcher = pattern.matcher(value);
+        String lastMatch = null;
+        while (matcher.find()) {
+            lastMatch = matcher.group(1);
+        }
+        return lastMatch != null ? lastMatch : value;
+    }
+
+    private boolean looksLikeToken(String value) {
+        return value != null && value.matches("[A-Za-z0-9_-]{6,}");
+    }
+
+    private String buildInviteErrorMessage(Response<?> response) {
+        if (response == null) {
+            return "No se pudo validar el codigo";
+        }
+
+        String code = "";
+        String message = "";
+        try {
+            if (response.errorBody() != null) {
+                String raw = response.errorBody().string();
+                message = sanitizeError(raw);
+                if (raw != null && !raw.isBlank()) {
+                    JSONObject json = new JSONObject(raw);
+                    code = json.optString("code", "");
+                    message = json.optString("message", message);
                 }
             }
+        } catch (IOException ignored) {
+        } catch (Exception ignored) {
+        }
 
-            @Override
-            public void onFailure(Call<List<LinkResponse>> call, Throwable t) {
-                if (attempt < 6) {
-                    routeRetryHandler.postDelayed(() -> routeToDashboardWithRetry(activeGoesToHostDashboard, attempt + 1), 600L);
-                } else {
-                    Toast.makeText(JoinCircleActivity.this, "Error consultando vínculo", Toast.LENGTH_SHORT).show();
-                }
-            }
-        });
+        if ("INVITATION_EXPIRED".equals(code) || "FAMILY_INVITATION_EXPIRED".equals(code)) {
+            return "Codigo expirado";
+        }
+        if ("INVITATION_CANCELLED".equals(code) || "FAMILY_INVITATION_CANCELLED".equals(code)) {
+            return "Codigo cancelado";
+        }
+        if ("INVITATION_ALREADY_ACCEPTED".equals(code) || "FAMILY_INVITATION_ALREADY_ACCEPTED".equals(code)) {
+            return "Codigo ya utilizado";
+        }
+        if ("INVITATION_NOT_FOUND".equals(code) || "FAMILY_INVITATION_NOT_FOUND".equals(code)) {
+            return "Codigo invalido";
+        }
+
+        if (response.code() == 410) {
+            return "Codigo expirado";
+        }
+        if (response.code() == 404) {
+            return "Codigo invalido";
+        }
+        if (response.code() == 400 && message.toLowerCase().contains("accepted")) {
+            return "Codigo ya utilizado";
+        }
+        if (response.code() == 400 && message.toLowerCase().contains("cancel")) {
+            return "Codigo cancelado";
+        }
+
+        return "No se pudo validar el codigo";
+    }
+
+    private String sanitizeError(String value) {
+        if (value == null) {
+            return "";
+        }
+        String sanitized = value.replace('\n', ' ').replace('\r', ' ').trim();
+        return sanitized.length() > 140 ? sanitized.substring(0, 140) + "..." : sanitized;
+    }
+
+    private String selectBestError(String previousError, String familyError) {
+        if (familyError != null && !familyError.isBlank() && !"No se pudo validar el codigo".equals(familyError)) {
+            return familyError;
+        }
+        if (previousError != null && !previousError.isBlank()) {
+            return previousError;
+        }
+        return "No se pudo validar el codigo";
     }
 }

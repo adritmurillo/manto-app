@@ -48,6 +48,35 @@
         android:textSize="13sp" />
 
     <TextView
+        android:id="@+id/tvMirrorUrl"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="6dp"
+        android:text="URL: https://ejemplo.com"
+        android:textColor="#127F73"
+        android:textSize="12sp"
+        android:textStyle="bold" />
+
+    <TextView
+        android:id="@+id/tvMirrorReason"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="6dp"
+        android:text="Motivo del analisis"
+        android:textColor="#6A6A6A"
+        android:textSize="12sp" />
+
+    <TextView
+        android:id="@+id/tvMirrorState"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="6dp"
+        android:text="En cuarentena"
+        android:textColor="#9E373A"
+        android:textSize="12sp"
+        android:textStyle="bold" />
+
+    <TextView
         android:id="@+id/tvMirrorReceived"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"

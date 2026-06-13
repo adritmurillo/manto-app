@@ -50,6 +50,33 @@
         android:textSize="13sp" />
 
     <LinearLayout
+        android:id="@+id/layoutSmsRoleCard"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="12dp"
+        android:background="@drawable/bg_security_surface"
+        android:orientation="vertical"
+        android:padding="12dp">
+
+        <TextView
+            android:id="@+id/tvSmsRoleStatus"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Activa Manto como app SMS para analizar mensajes reales entrantes."
+            android:textColor="#1B1F22"
+            android:textSize="13sp" />
+
+        <Button
+            android:id="@+id/btnRequestDefaultSms"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="10dp"
+            android:backgroundTint="#4FBBB2"
+            android:text="Activar como app SMS"
+            android:textColor="@android:color/white" />
+    </LinearLayout>
+
+    <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="12dp"
@@ -183,7 +210,7 @@
             android:layout_height="wrap_content"
             android:layout_weight="1"
             android:background="@drawable/bg_chip_neutral"
-            android:text="BLOQUEADOS"
+            android:text="RECIBIDOS"
             android:textSize="11sp" />
 
         <Space android:layout_width="6dp" android:layout_height="1dp" />
@@ -194,7 +221,7 @@
             android:layout_height="wrap_content"
             android:layout_weight="1"
             android:background="@drawable/bg_chip_neutral"
-            android:text="SOSPECHOSOS"
+            android:text="CUARENTENA"
             android:textSize="11sp" />
     </LinearLayout>
 
@@ -206,6 +233,15 @@
         android:text="Bloqueados por seguridad"
         android:textStyle="bold"
         android:textColor="#141414" />
+
+    <TextView
+        android:id="@+id/tvMirrorSummary"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="4dp"
+        android:text="0 recibidos seguros, 0 en cuarentena"
+        android:textColor="#6A6A6A"
+        android:textSize="12sp" />
 
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/rvSecurityMirror"

@@ -43,15 +43,25 @@ public class SecurityMirrorAdapter extends RecyclerView.Adapter<SecurityMirrorAd
         holder.tvSender.setText(item.getSender());
         holder.tvMessage.setText(item.getMessage());
         holder.tvReceived.setText("Recibido " + timeFormat.format(new Date(item.getTimestampMillis())));
+        holder.tvUrl.setVisibility(isBlank(item.getUrl()) ? View.GONE : View.VISIBLE);
+        holder.tvUrl.setText(isBlank(item.getUrl()) ? "" : "URL: " + item.getUrl());
+        holder.tvReason.setText(item.getReason() == null || item.getReason().isBlank()
+                ? "Sin observaciones adicionales."
+                : item.getReason());
+        holder.tvState.setText(resolveStateText(item));
+        holder.tvState.setTextColor(item.isInQuarantine() ? 0xFF9E373A : 0xFF1D736B);
 
         if (item.isWhitelisted()) {
             holder.tvTag.setText("LISTA BLANCA");
             holder.tvTag.setBackgroundResource(R.drawable.bg_chip_safe);
-        } else if (item.isBlocked()) {
-            holder.tvTag.setText("PHISHING");
+        } else if (item.isInQuarantine()) {
+            holder.tvTag.setText("CUARENTENA");
             holder.tvTag.setBackgroundResource(R.drawable.bg_chip_danger);
+        } else if ("NO_URL".equals(normalize(item.getStatus()))) {
+            holder.tvTag.setText("SIN URL");
+            holder.tvTag.setBackgroundResource(R.drawable.bg_chip_neutral);
         } else {
-            holder.tvTag.setText(item.getStatus());
+            holder.tvTag.setText(normalize(item.getStatus()));
             holder.tvTag.setBackgroundResource(R.drawable.bg_chip_neutral);
         }
     }
@@ -64,6 +74,9 @@ public class SecurityMirrorAdapter extends RecyclerView.Adapter<SecurityMirrorAd
     static class ViewHolder extends RecyclerView.ViewHolder {
         TextView tvSender;
         TextView tvMessage;
+        TextView tvUrl;
+        TextView tvReason;
+        TextView tvState;
         TextView tvReceived;
         TextView tvTag;
 
@@ -71,8 +84,44 @@ public class SecurityMirrorAdapter extends RecyclerView.Adapter<SecurityMirrorAd
             super(itemView);
             tvSender = itemView.findViewById(R.id.tvMirrorSender);
             tvMessage = itemView.findViewById(R.id.tvMirrorMessage);
+            tvUrl = itemView.findViewById(R.id.tvMirrorUrl);
+            tvReason = itemView.findViewById(R.id.tvMirrorReason);
+            tvState = itemView.findViewById(R.id.tvMirrorState);
             tvReceived = itemView.findViewById(R.id.tvMirrorReceived);
             tvTag = itemView.findViewById(R.id.tvMirrorTag);
         }
+    }
+
+    private String resolveStateText(SecurityAnalysisItem item) {
+        if (item == null) {
+            return "Sin estado";
+        }
+        String reviewState = normalize(item.getReviewState());
+        if (SecurityAnalysisItem.REVIEW_PENDING_HOST.equals(reviewState)) {
+            return "En cuarentena - pendiente de revision del anfitrion";
+        }
+        if (SecurityAnalysisItem.REVIEW_LOCAL_BLOCKED.equals(reviewState)) {
+            return "En cuarentena local por riesgo detectado";
+        }
+        if (SecurityAnalysisItem.REVIEW_HOST_ALLOWED.equals(reviewState)) {
+            return "Disponible en recibidos";
+        }
+        if (SecurityAnalysisItem.REVIEW_HOST_BLOCKED.equals(reviewState)) {
+            return "Bloqueado por el anfitrion";
+        }
+        if ("NO_URL".equals(normalize(item.getStatus()))) {
+            return "Disponible en recibidos - sin enlaces detectados";
+        }
+        return item.isInInbox()
+                ? "Disponible en recibidos"
+                : "En cuarentena";
+    }
+
+    private String normalize(String value) {
+        return value == null ? "" : value.trim().toUpperCase(Locale.ROOT);
+    }
+
+    private boolean isBlank(String value) {
+        return value == null || value.trim().isEmpty();
     }
 }

@@ -2,41 +2,51 @@
     <string name="app_name">Manto</string>
 
     <string name="login_title">Manto</string>
-    <string name="login_subtitle">Cuidando lo que más importa</string>
+    <string name="login_subtitle">Cuidando lo que mas importa</string>
     <string name="login_welcome">Bienvenido</string>
     <string name="login_instruction">Ingresa tus credenciales para continuar</string>
     <string name="login_email_title">CORREO</string>
-    <string name="login_contra_title">CONTRASEÑA</string>
+    <string name="login_contra_title">CONTRASENA</string>
     <string name="login_email_hint">tu@correo.com</string>
     <string name="login_password_hint">***************</string>
-    <string name="login_forgot_password">¿Olvidaste tu contraseña?</string>
-    <string name="login_button">Iniciar Sesión</string>
-    <string name="login_create_account_text">¿Nuevo en Manto? </string>
+    <string name="login_forgot_password">Olvidaste tu contrasena?</string>
+    <string name="login_button">Iniciar sesion</string>
+    <string name="login_create_account_text">Nuevo en Manto? </string>
     <string name="login_create_account_link">Crear cuenta</string>
 
-    <string name="configuracion">CONFIGURACIÓN DEL DISPOSITIVO</string>
-    <string name="texto_config">El corazón de tu hogar</string>
-    <string name="sub_texto_config">Definie el nombre de tu circulo y genera una invitación para conectar a tu familiar</string>
+    <string name="configuracion">CONFIGURACION DEL DISPOSITIVO</string>
+    <string name="texto_config">El corazon de tu hogar</string>
+    <string name="sub_texto_config">Define el nombre de tu circulo y genera una invitacion para conectar a tu familiar</string>
 
-    <string name="toast_login_attempt">Intentando iniciar sesión con: </string>
+    <string name="toast_login_attempt">Intentando iniciar sesion con: </string>
     <string name="toast_register_navigate">Yendo a la pantalla de registro</string>
 
     <string name="register_title">Crear Cuenta</string>
-    <string name="register_subtitle">Únete a Manto hoy mismo</string>
+    <string name="register_subtitle">Unete a Manto hoy mismo</string>
     <string name="register_name_hint">Nombre completo</string>
-    <string name="register_phone_hint">Número de celular</string>
+    <string name="register_phone_hint">Numero de celular</string>
     <string name="register_button">Registrarse</string>
     <string name="register_google_button">Continuar con Google</string>
-    <string name="register_back_login">¿Ya tienes cuenta? Iniciar Sesión</string>
+    <string name="register_back_login">Ya tienes cuenta? Iniciar sesion</string>
 
     <string name="register_title_family">Crear cuenta familiar</string>
-    <string name="register_subtitle_family">Únete a Manto y comienza a proteger a tu familia hoy mismo</string>
+    <string name="register_subtitle_family">Unete a Manto y comienza a proteger a tu familia hoy mismo</string>
     <string name="register_name">NOMBRE COMPLETO</string>
-    <string name="register_email">CORREO ELECTRÓNICO</string>
-    <string name="register_phone">NÚMERO DE CONTACTO</string>
-    <string name="register_password">CONTRASEÑA</string>
-    <string name="register_confirm_password">CONFIRMAR CONTRASEÑA</string>
-    <string name="register_terms">Acepto los Términos de servicio y la Política de Privacidad</string>
+    <string name="register_email">CORREO ELECTRONICO</string>
+    <string name="register_phone">NUMERO DE CONTACTO</string>
+    <string name="register_password">CONTRASENA</string>
+    <string name="register_confirm_password">CONFIRMAR CONTRASENA</string>
+    <string name="register_terms">Acepto los Terminos de servicio y la Politica de Privacidad</string>
     <string name="register_button_main">Crear Cuenta</string>
-    <string name="register_footer_login">¿Ya tienes una cuenta? Iniciar Sesión</string>
+    <string name="register_footer_login">Ya tienes una cuenta? Iniciar sesion</string>
+
+    <string name="enable_sos_shortcut">Activar atajo SOS fisico</string>
+    <string name="sos_shortcut_enabled">Atajo SOS fisico activo</string>
+    <string name="emergency_shortcut_service_description">Permite activar la alerta SOS con triple pulsacion de volumen abajo.</string>
+    <string name="emergency_shortcut_service_summary">Triple volumen abajo para pedir ayuda aun con la app en segundo plano.</string>
+    <string name="sms_permission_required">Concede permisos SMS para detectar mensajes reales. Luego podras activar Manto como app SMS si quieres el flujo completo.</string>
+    <string name="sms_role_required">Activa Manto como app SMS para analizar mensajes reales entrantes.</string>
+    <string name="sms_role_active">Manto ya esta configurada como app SMS predeterminada.</string>
+    <string name="sms_permission_request">Conceder permisos SMS</string>
+    <string name="sms_role_request">Activar como app SMS</string>
 </resources>

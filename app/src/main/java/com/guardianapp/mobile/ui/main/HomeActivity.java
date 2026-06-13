@@ -1,6 +1,7 @@
 package com.guardianapp.mobile.ui.main;
 
 import android.content.Intent;
+import android.net.Uri;
 import android.content.ClipData;
 import android.content.ClipboardManager;
 import android.os.Bundle;
@@ -28,6 +29,9 @@ import com.guardianapp.mobile.ui.protecteduser.ProtectedDashboardActivity;
 import com.guardianapp.mobile.ui.invite.PendingInviteStore;
 
 import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+import java.io.IOException;
 
 import retrofit2.Call;
 import retrofit2.Callback;
@@ -85,7 +89,7 @@ public class HomeActivity extends AppCompatActivity {
         if (getIntent() != null) {
             String prefill = getIntent().getStringExtra(EXTRA_PREFILL_INVITE_TOKEN);
             if (prefill != null && !prefill.isBlank()) {
-                etInvitationCode.setText(prefill.trim().toUpperCase());
+                etInvitationCode.setText(normalizeInvitationInput(prefill));
             }
         }
 
@@ -132,8 +136,9 @@ public class HomeActivity extends AppCompatActivity {
                             Toast.makeText(HomeActivity.this, "Conectado al Backend", Toast.LENGTH_SHORT).show();
 
                             // Auto-continue if invite token was prefilled (from link).
-                            String token = etInvitationCode.getText() != null ? etInvitationCode.getText().toString().trim() : "";
+                            String token = etInvitationCode.getText() != null ? normalizeInvitationInput(etInvitationCode.getText().toString()) : "";
                             if (!token.isEmpty()) {
+                                etInvitationCode.setText(token);
                                 acceptInvitationCode();
                                 return;
                             }
@@ -254,11 +259,12 @@ public class HomeActivity extends AppCompatActivity {
     private void acceptInvitationCode() {
         if (currentUserIdPostgres == null) return;
 
-        String token = etInvitationCode.getText().toString().trim();
+        String token = normalizeInvitationInput(etInvitationCode.getText().toString());
         if (token.isEmpty()) {
             Toast.makeText(this, "Ingresa un código", Toast.LENGTH_SHORT).show();
             return;
         }
+        etInvitationCode.setText(token);
 
         RetrofitClient.getApiService().acceptInvitation(token, currentUserIdPostgres).enqueue(new Callback<LinkResponse>() {
             @Override
@@ -274,18 +280,18 @@ public class HomeActivity extends AppCompatActivity {
                     finish();
 
                 } else {
-                    tryAcceptFamilyInvitation(token);
+                    tryAcceptFamilyInvitation(token, describeApiError("Invitacion protegida", response));
                 }
             }
 
             @Override
             public void onFailure(Call<LinkResponse> call, Throwable t) {
-                tryAcceptFamilyInvitation(token);
+                tryAcceptFamilyInvitation(token, "Invitacion protegida: red " + safeThrowableMessage(t));
             }
         });
     }
 
-    private void tryAcceptFamilyInvitation(String token) {
+    private void tryAcceptFamilyInvitation(String token, String previousError) {
         RetrofitClient.getApiService().acceptFamilyInvitation(token, currentUserIdPostgres)
                 .enqueue(new Callback<FamilyGroupResponse>() {
                     @Override
@@ -309,13 +315,13 @@ public class HomeActivity extends AppCompatActivity {
                                 routeProtectedToDashboardWithRetry();
                             }
                         } else {
-                            Toast.makeText(HomeActivity.this, "Codigo invalido o expirado", Toast.LENGTH_SHORT).show();
+                            Toast.makeText(HomeActivity.this, previousError + " | " + describeApiError("Invitacion familiar", response), Toast.LENGTH_LONG).show();
                         }
                     }
 
                     @Override
                     public void onFailure(Call<FamilyGroupResponse> call, Throwable t) {
-                        Toast.makeText(HomeActivity.this, "Error de red", Toast.LENGTH_SHORT).show();
+                        Toast.makeText(HomeActivity.this, previousError + " | Invitacion familiar: red " + safeThrowableMessage(t), Toast.LENGTH_LONG).show();
                     }
                 });
     }
@@ -499,5 +505,73 @@ public class HomeActivity extends AppCompatActivity {
     protected void onDestroy() {
         super.onDestroy();
         stopLinkPolling();
+    }
+    private String normalizeInvitationInput(String rawValue) {
+        if (rawValue == null) {
+            return "";
+        }
+        String value = rawValue.trim();
+        if (value.isBlank()) {
+            return "";
+        }
+
+        try {
+            Uri uri = Uri.parse(value);
+            String queryToken = uri.getQueryParameter("token");
+            if (queryToken != null && !queryToken.isBlank()) {
+                return queryToken.trim();
+            }
+            String lastPathSegment = uri.getLastPathSegment();
+            if (looksLikeToken(lastPathSegment)) {
+                return lastPathSegment.trim();
+            }
+        } catch (Exception ignored) {
+        }
+
+        Pattern pattern = Pattern.compile("([A-Za-z0-9_-]{6,})");
+        Matcher matcher = pattern.matcher(value);
+        String lastMatch = null;
+        while (matcher.find()) {
+            lastMatch = matcher.group(1);
+        }
+        return lastMatch != null ? lastMatch : value;
+    }
+
+    private boolean looksLikeToken(String value) {
+        return value != null && value.matches("[A-Za-z0-9_-]{6,}");
+    }
+
+
+    private String describeApiError(String label, Response<?> response) {
+        if (response == null) {
+            return label + ": sin respuesta";
+        }
+        String details = "";
+        try {
+            if (response.errorBody() != null) {
+                details = response.errorBody().string();
+            }
+        } catch (IOException ignored) {
+        }
+        details = sanitizeError(details);
+        if (details.isBlank()) {
+            return label + ": HTTP " + response.code();
+        }
+        return label + ": HTTP " + response.code() + " - " + details;
+    }
+
+    private String sanitizeError(String value) {
+        if (value == null) {
+            return "";
+        }
+        String sanitized = value.replace('\n', ' ').replace('\r', ' ').trim();
+        return sanitized.length() > 140 ? sanitized.substring(0, 140) + "..." : sanitized;
+    }
+
+    private String safeThrowableMessage(Throwable t) {
+        if (t == null || t.getMessage() == null || t.getMessage().isBlank()) {
+            return "sin detalle";
+        }
+        return sanitizeError(t.getMessage());
     }
 }

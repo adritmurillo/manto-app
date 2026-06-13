@@ -9,6 +9,8 @@ import android.location.LocationManager;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
+import android.provider.Settings;
+import android.view.KeyEvent;
 import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
@@ -26,6 +28,7 @@ import com.guardianapp.mobile.data.api.EmergencyAudioRecordingResponse;
 import com.guardianapp.mobile.data.api.LinkResponse;
 import com.guardianapp.mobile.data.audio.EmergencyLiveAudioStreamer;
 import com.guardianapp.mobile.data.realtime.StompRealtimeClient;
+import com.guardianapp.mobile.service.EmergencyShortcutAccessibilityService;
 import com.guardianapp.mobile.ui.main.MainActivity;
 import com.guardianapp.mobile.ui.common.AppNavigator;
 import com.guardianapp.mobile.ui.common.FamilyAccessGuard;
@@ -51,6 +54,8 @@ public class ProtectedDashboardActivity extends AppCompatActivity {
 
     private static final int LOCATION_PERMISSION_REQUEST_CODE = 1201;
     private static final long EMERGENCY_AUDIO_MAX_DURATION_MS = 30 * 60 * 1000L;
+    private static final int EMERGENCY_VOLUME_PRESS_TARGET = 3;
+    private static final long EMERGENCY_VOLUME_PRESS_WINDOW_MS = 1500L;
 
     private String miIdProtegido;
     private String idDelVinculo;
@@ -66,6 +71,8 @@ public class ProtectedDashboardActivity extends AppCompatActivity {
     private final StompRealtimeClient emergencyStatusClient = new StompRealtimeClient();
     private final Handler familyGuardHandler = new Handler(Looper.getMainLooper());
     private Runnable familyGuardRunnable;
+    private int volumeDownPressCount;
+    private long lastVolumeDownPressAt;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -85,8 +92,10 @@ public class ProtectedDashboardActivity extends AppCompatActivity {
 
         Button btnSimulateThreat = findViewById(R.id.btnSimulateThreat);
         Button btnSos = findViewById(R.id.btnSos);
+        Button btnEnableShortcut = findViewById(R.id.btnEnableShortcut);
         TextView tvLogout = findViewById(R.id.tvLogoutProtected);
         emergencyLiveAudioStreamer = new EmergencyLiveAudioStreamer();
+        persistProtectedSession();
 
         // Flujo real de bloqueo por WebView seguro.
         btnSimulateThreat.setOnClickListener(v -> {
@@ -97,11 +106,15 @@ public class ProtectedDashboardActivity extends AppCompatActivity {
         });
 
         btnSos.setOnClickListener(v -> validateAccessBeforeEmergency(this::showEmergencyConfirmationDialog));
+        if (btnEnableShortcut != null) {
+            btnEnableShortcut.setOnClickListener(v -> openAccessibilitySettings());
+        }
 
         checkActiveEmergencyOnEntry();
 
         tvLogout.setOnClickListener(v -> {
             linkRealtimeClient.disconnect();
+            ProtectedSessionStore.clear(this);
             FirebaseAuth.getInstance().signOut();
             startActivity(new Intent(this, MainActivity.class));
             finish();
@@ -111,9 +124,21 @@ public class ProtectedDashboardActivity extends AppCompatActivity {
     }
 
     @Override
+    public boolean dispatchKeyEvent(KeyEvent event) {
+        if (event.getAction() == KeyEvent.ACTION_DOWN
+                && event.getKeyCode() == KeyEvent.KEYCODE_VOLUME_DOWN) {
+            if (handleEmergencyVolumeShortcut()) {
+                return true;
+            }
+        }
+        return super.dispatchKeyEvent(event);
+    }
+
+    @Override
     protected void onResume() {
         super.onResume();
         startFamilyGuard();
+        updateShortcutButtonState();
     }
 
     @Override
@@ -132,6 +157,7 @@ public class ProtectedDashboardActivity extends AppCompatActivity {
                             for (LinkResponse link : response.body()) {
                                 if (miIdProtegido.equals(link.getProtectedUserId()) && "ACTIVE".equals(link.getStatus())) {
                                     idDelVinculo = link.getId();
+                                    persistProtectedSession();
                                     break;
                                 }
                             }
@@ -156,6 +182,25 @@ public class ProtectedDashboardActivity extends AppCompatActivity {
                 .setNegativeButton("Cancelar", null)
                 .setPositiveButton("Activar", (dialog, which) -> triggerEmergency())
                 .show();
+    }
+
+    private boolean handleEmergencyVolumeShortcut() {
+        long now = System.currentTimeMillis();
+        if (now - lastVolumeDownPressAt > EMERGENCY_VOLUME_PRESS_WINDOW_MS) {
+            volumeDownPressCount = 0;
+        }
+
+        lastVolumeDownPressAt = now;
+        volumeDownPressCount++;
+
+        if (volumeDownPressCount >= EMERGENCY_VOLUME_PRESS_TARGET) {
+            volumeDownPressCount = 0;
+            validateAccessBeforeEmergency(this::showEmergencyConfirmationDialog);
+            Toast.makeText(this, "Atajo SOS detectado", Toast.LENGTH_SHORT).show();
+            return true;
+        }
+
+        return false;
     }
 
     private void triggerEmergency() {
@@ -514,6 +559,7 @@ public class ProtectedDashboardActivity extends AppCompatActivity {
                                 if (miIdProtegido.equals(link.getProtectedUserId())) {
                                     if ("ACTIVE".equals(link.getStatus())) {
                                         idDelVinculo = link.getId();
+                                        persistProtectedSession();
                                         return;
                                     }
                                 }
@@ -547,7 +593,7 @@ public class ProtectedDashboardActivity extends AppCompatActivity {
         familyGuardRunnable = new Runnable() {
             @Override
             public void run() {
-                FamilyAccessGuard.ensureInFamily(ProtectedDashboardActivity.this, miIdProtegido, () ->
+                FamilyAccessGuard.ensureProtectedLinked(ProtectedDashboardActivity.this, miIdProtegido, () ->
                         familyGuardHandler.postDelayed(this, 5000L)
                 );
             }
@@ -561,8 +607,29 @@ public class ProtectedDashboardActivity extends AppCompatActivity {
         }
     }
 
+    private void persistProtectedSession() {
+        ProtectedSessionStore.save(this, miIdProtegido, idDelVinculo);
+    }
+
+    private void openAccessibilitySettings() {
+        startActivity(new Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS));
+    }
+
+    private void updateShortcutButtonState() {
+        Button btnEnableShortcut = findViewById(R.id.btnEnableShortcut);
+        if (btnEnableShortcut == null) {
+            return;
+        }
+        boolean enabled = EmergencyShortcutAccessibilityService.isEnabled(this);
+        btnEnableShortcut.setText(enabled
+                ? getString(R.string.sos_shortcut_enabled)
+                : getString(R.string.enable_sos_shortcut));
+        btnEnableShortcut.setEnabled(!enabled);
+        btnEnableShortcut.setAlpha(enabled ? 0.7f : 1f);
+    }
+
     private void validateAccessBeforeEmergency(Runnable onAllowed) {
-        FamilyAccessGuard.ensureInFamily(this, miIdProtegido, () ->
+        FamilyAccessGuard.ensureProtectedLinked(this, miIdProtegido, () ->
                 RetrofitClient.getApiService().getMyLinks(miIdProtegido).enqueue(new Callback<java.util.List<LinkResponse>>() {
                     @Override
                     public void onResponse(Call<java.util.List<LinkResponse>> call, Response<java.util.List<LinkResponse>> response) {
@@ -573,6 +640,7 @@ public class ProtectedDashboardActivity extends AppCompatActivity {
                         for (LinkResponse link : response.body()) {
                             if (miIdProtegido.equals(link.getProtectedUserId()) && "ACTIVE".equals(link.getStatus())) {
                                 idDelVinculo = link.getId();
+                                persistProtectedSession();
                                 onAllowed.run();
                                 return;
                             }
