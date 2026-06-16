@@ -1,6 +1,7 @@
 package com.guardianapp.mobile.ui.protecteduser;
 
 import android.Manifest;
+import android.annotation.SuppressLint;
 import android.content.pm.PackageManager;
 import android.content.Intent;
 import android.location.Location;
@@ -47,6 +48,24 @@ import okhttp3.RequestBody;
 import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
+
+import android.content.pm.ApplicationInfo;
+import android.content.pm.PackageManager;
+import android.util.Log;
+
+import java.util.ArrayList;
+import java.util.List;
+
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
+
+import com.guardianapp.mobile.data.api.RetrofitClient;
+import com.guardianapp.mobile.data.api.GuardianApiService;
+import com.guardianapp.mobile.data.api.ReportInstalledAppsRequest;
+import com.guardianapp.mobile.data.api.BlockedAppResponse;
+import com.guardianapp.mobile.data.appcontrol.BlockedApp;
+import com.guardianapp.mobile.data.appcontrol.BlockedAppsStore;
 
 public class ProtectedDashboardActivity extends AppCompatActivity {
 
@@ -121,6 +140,7 @@ public class ProtectedDashboardActivity extends AppCompatActivity {
         });
 
         connectRealtime();
+        syncAppControlData();
     }
 
     @Override
@@ -460,7 +480,7 @@ public class ProtectedDashboardActivity extends AppCompatActivity {
             }
         });
     }
-
+    @SuppressLint("MissingPermission")
     private Location getBestLastKnownLocation() {
         if (!hasLocationPermission()) {
             return null;
@@ -654,6 +674,81 @@ public class ProtectedDashboardActivity extends AppCompatActivity {
                     }
                 })
         );
+    }
+
+    // ==========================================
+    // SISTEMA DE CONTROL DE APPS (SINCRONIZACIÓN)
+    // ==========================================
+
+    private void syncAppControlData() {
+        // 1. Regla de eficiencia: Solo sincronizamos si pasaron 24h o es la primera vez
+        if (!BlockedAppsStore.shouldSync(this)) {
+            Log.d("AppControl", "Caché reciente. No es necesario sincronizar con el backend hoy.");
+            return;
+        }
+
+        // TODO: Extrae estos IDs reales de tu ProtectedSessionStore o SharedPreferences
+        String protectedUserId = "ID_DEL_USUARIO";
+        String familyGroupId = "ID_DEL_GRUPO_FAMILIAR";
+
+        // Ajusta esta línea según cómo instancies Retrofit en tu proyecto
+        GuardianApiService apiService = RetrofitClient.getApiService();
+
+        // 2. Reportamos las apps y 3. Descargamos las reglas
+        reportInstalledAppsToBackend(apiService, protectedUserId);
+        downloadBlockedApps(apiService, protectedUserId, familyGroupId);
+    }
+
+    private void reportInstalledAppsToBackend(GuardianApiService apiService, String protectedUserId) {
+        PackageManager pm = getPackageManager();
+        List<ApplicationInfo> packages = pm.getInstalledApplications(PackageManager.GET_META_DATA);
+        List<ReportInstalledAppsRequest.AppInfo> appsToReport = new ArrayList<>();
+
+        for (ApplicationInfo packageInfo : packages) {
+            // Filtro pro: Solo enviamos apps normales, ignoramos las internas del sistema Android
+            if ((packageInfo.flags & ApplicationInfo.FLAG_SYSTEM) == 0) {
+                String appName = pm.getApplicationLabel(packageInfo).toString();
+                String packageName = packageInfo.packageName;
+                appsToReport.add(new ReportInstalledAppsRequest.AppInfo(packageName, appName));
+            }
+        }
+
+        ReportInstalledAppsRequest request = new ReportInstalledAppsRequest(appsToReport);
+
+        apiService.reportInstalledApps(protectedUserId, request).enqueue(new Callback<Void>() {
+            @Override
+            public void onResponse(Call<Void> call, Response<Void> response) {
+                if (response.isSuccessful()) {
+                    Log.d("AppControl", "Lista de apps reportada con éxito al backend.");
+                }
+            }
+            @Override
+            public void onFailure(Call<Void> call, Throwable t) {
+                Log.e("AppControl", "Error reportando apps: " + t.getMessage());
+            }
+        });
+    }
+
+    private void downloadBlockedApps(GuardianApiService apiService, String protectedUserId, String familyGroupId) {
+        apiService.getMyRestrictions(protectedUserId, familyGroupId).enqueue(new Callback<List<BlockedAppResponse>>() {
+            @Override
+            public void onResponse(Call<List<BlockedAppResponse>> call, Response<List<BlockedAppResponse>> response) {
+                if (response.isSuccessful() && response.body() != null) {
+                    List<BlockedApp> localApps = new ArrayList<>();
+                    for (BlockedAppResponse dto : response.body()) {
+                        localApps.add(new BlockedApp(dto.getPackageName(), dto.getAppName()));
+                    }
+
+                    // Sobrescribimos el caché local del celular con la nueva lista negra
+                    BlockedAppsStore.save(ProtectedDashboardActivity.this, localApps);
+                    Log.d("AppControl", "Restricciones de seguridad actualizadas en el celular.");
+                }
+            }
+            @Override
+            public void onFailure(Call<List<BlockedAppResponse>> call, Throwable t) {
+                Log.e("AppControl", "Error descargando restricciones: " + t.getMessage());
+            }
+        });
     }
 
 }

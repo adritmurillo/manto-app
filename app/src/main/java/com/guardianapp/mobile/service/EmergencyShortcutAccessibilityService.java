@@ -32,6 +32,19 @@ public class EmergencyShortcutAccessibilityService extends AccessibilityService 
 
     @Override
     public void onAccessibilityEvent(AccessibilityEvent event) {
+        if (event.getEventType() == AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED) {
+            if (event.getPackageName() != null) {
+                String packageName = event.getPackageName().toString();
+                if (!packageName.equals(getPackageName())) {
+                    if (com.guardianapp.mobile.data.appcontrol.BlockedAppsStore.isBlocked(getApplicationContext(), packageName)) {
+                        android.content.Intent intent = new android.content.Intent(this, com.guardianapp.mobile.ui.protecteduser.AppBlockedActivity.class);
+                        intent.putExtra("BLOCKED_PACKAGE", packageName);
+                        intent.addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK | android.content.Intent.FLAG_ACTIVITY_CLEAR_TOP);
+                        startActivity(intent);
+                    }
+                }
+            }
+        }
     }
 
     @Override

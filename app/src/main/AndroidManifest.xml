@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
-
+    <uses-permission android:name="android.permission.QUERY_ALL_PACKAGES" tools:ignore="QueryAllPackagesPermission" />
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
@@ -15,7 +15,7 @@
     <uses-permission android:name="android.permission.SEND_SMS" />
     <uses-permission android:name="android.permission.RECEIVE_MMS" />
     <uses-permission android:name="android.permission.RECEIVE_WAP_PUSH" />
-
+    <uses-feature android:name="android.hardware.telephony" android:required="false" />
     <application
         android:allowBackup="true"
         android:dataExtractionRules="@xml/data_extraction_rules"
@@ -47,6 +47,9 @@
                 <data android:scheme="mmsto" />
             </intent-filter>
         </activity>
+        <activity
+            android:name=".ui.protecteduser.AppBlockedActivity"
+            android:exported="false" />
         <activity
             android:name=".ui.protecteduser.SecureBrowserActivity"
             android:exported="false" />
@@ -139,6 +142,9 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+        <activity
+            android:name=".ui.host.HostAppControlActivity"
+            android:exported="false" />
         <activity
             android:name=".ui.invite.InviteEntryActivity"
             android:exported="true">

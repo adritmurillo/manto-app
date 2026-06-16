@@ -6,6 +6,7 @@ import com.guardianapp.mobile.data.threat.ThreatAnalysisResponse;
 import java.util.List;
 
 import retrofit2.Call;
+import retrofit2.http.DELETE;
 import retrofit2.http.Multipart;
 import retrofit2.http.GET;
 import retrofit2.http.Header;
@@ -175,6 +176,40 @@ public interface GuardianApiService {
     Call<Void> registerDeviceToken(
             @Header("X-User-Id") String userId,
             @Body RegisterDeviceTokenRequest request
+    );
+
+    // ==========================================
+    // SISTEMA DE CONTROL PARENTAL (BLOQUEO DE APPS)
+    // ==========================================
+
+    @POST("api/v1/installed-apps/report")
+    Call<Void> reportInstalledApps(
+            @Header("X-User-Id") String userId,
+            @Body ReportInstalledAppsRequest request
+    );
+
+    @GET("api/v1/installed-apps/{protectedUserId}")
+    Call<List<InstalledAppResponse>> getInstalledApps(
+            @Header("X-User-Id") String hostId,
+            @Path("protectedUserId") String protectedUserId
+    );
+
+    @POST("api/v1/blocked-apps")
+    Call<BlockedAppResponse> blockApp(
+            @Header("X-User-Id") String hostId,
+            @Body BlockAppRequest request
+    );
+
+    @DELETE("api/v1/blocked-apps/{id}")
+    Call<Void> unblockApp(
+            @Header("X-User-Id") String hostId,
+            @Path("id") String blockedAppId
+    );
+
+    @GET("api/v1/blocked-apps/my-restrictions/{familyGroupId}")
+    Call<List<BlockedAppResponse>> getMyRestrictions(
+            @Header("X-User-Id") String protectedUserId,
+            @Path("familyGroupId") String familyGroupId
     );
 
 }
