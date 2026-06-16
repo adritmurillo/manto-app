@@ -1,6 +1,7 @@
 package com.guardianapp.mobile.sms;
 
 import android.content.Context;
+import android.util.Log;
 import android.util.Patterns;
 
 import com.guardianapp.mobile.data.api.CreateSmsThreatAlertRequest;
@@ -19,6 +20,8 @@ import retrofit2.Callback;
 import retrofit2.Response;
 
 public final class SmsThreatProcessor {
+
+    private static final String TAG = "SmsThreatProcessor";
 
     public interface ResultCallback {
         void onProcessed(ProcessResult result);
@@ -78,7 +81,7 @@ public final class SmsThreatProcessor {
                     normalizedMessage,
                     null,
                     "NO_URL",
-                    "SMS recibido sin enlaces detectables. No se envio al backend.",
+                    "SMS recibido sin enlaces detectables.",
                     false,
                     false,
                     null,
@@ -86,6 +89,14 @@ public final class SmsThreatProcessor {
                     SecurityAnalysisItem.REVIEW_LOCAL_ONLY
             );
             SecurityAnalysisStore.add(item);
+            persistSmsRecord(
+                    context,
+                    normalizedSender,
+                    normalizedMessage,
+                    null,
+                    "SAFE",
+                    "SMS recibido sin enlaces detectables."
+            );
             callback.onProcessed(new ProcessResult(item, false, false));
             return;
         }
@@ -117,12 +128,16 @@ public final class SmsThreatProcessor {
                                 reviewState
                         );
                         SecurityAnalysisStore.add(item);
-                        boolean requested = requestHostAlertIfNeeded(
+                        String analyzedUrl = decision.getAnalyzedUrl() != null
+                                ? decision.getAnalyzedUrl()
+                                : detectedUrl;
+                        boolean requested = persistSmsRecord(
                                 context,
                                 normalizedSender,
                                 normalizedMessage,
-                                detectedUrl,
-                                decision
+                                analyzedUrl,
+                                normalizeThreatStatus(decision),
+                                decision.getReason()
                         );
                         callback.onProcessed(new ProcessResult(item, true, requested || hostAlertRequested));
                     }
@@ -135,35 +150,38 @@ public final class SmsThreatProcessor {
         );
     }
 
-    private static boolean requestHostAlertIfNeeded(Context context,
-                                                    String sender,
-                                                    String message,
-                                                    String fallbackUrl,
-                                                    ThreatAnalysisRepository.ThreatDecision decision) {
-        if (!shouldRequestHostAlert(context, decision)) {
-            return false;
-        }
+    private static boolean persistSmsRecord(Context context,
+                                            String sender,
+                                            String message,
+                                            String detectedUrl,
+                                            String analysisStatus,
+                                            String analysisReason) {
         String linkId = ProtectedSessionStore.getLinkId(context);
         String protectedId = ProtectedSessionStore.getProtectedId(context);
-
-        String analyzedUrl = decision.getAnalyzedUrl() != null ? decision.getAnalyzedUrl() : fallbackUrl;
+        if (linkId == null || linkId.isBlank() || protectedId == null || protectedId.isBlank()) {
+            return false;
+        }
         CreateSmsThreatAlertRequest request = new CreateSmsThreatAlertRequest(
                 linkId,
                 protectedId,
                 sender,
                 message,
-                analyzedUrl == null ? "" : analyzedUrl,
-                normalizeThreatStatus(decision),
-                decision.getReason()
+                detectedUrl,
+                analysisStatus,
+                analysisReason
         );
 
         RetrofitClient.getApiService().createSmsThreatAlert(request).enqueue(new Callback<SmsThreatAlertResponse>() {
             @Override
             public void onResponse(Call<SmsThreatAlertResponse> call, Response<SmsThreatAlertResponse> response) {
+                if (!response.isSuccessful()) {
+                    Log.e(TAG, "No se pudo registrar SMS en backend. HTTP " + response.code());
+                }
             }
 
             @Override
             public void onFailure(Call<SmsThreatAlertResponse> call, Throwable t) {
+                Log.e(TAG, "Fallo registrando SMS en backend", t);
             }
         });
         return true;

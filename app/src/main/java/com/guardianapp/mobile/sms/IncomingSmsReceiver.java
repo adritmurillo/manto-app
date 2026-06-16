@@ -42,21 +42,32 @@ public class IncomingSmsReceiver extends BroadcastReceiver {
             }
         }
 
+        final String finalSender = sender;
+        final String finalBody = body.toString();
         PendingResult pendingResult = goAsync();
         SmsThreatProcessor.processIncomingMessage(
                 context.getApplicationContext(),
-                sender,
-                body.toString(),
+                finalSender,
+                finalBody,
                 null,
                 new SmsThreatProcessor.ResultCallback() {
                     @Override
                     public void onProcessed(SmsThreatProcessor.ProcessResult result) {
+                        SmsNotificationHelper.showIncomingSmsNotification(
+                                context.getApplicationContext(),
+                                result.getItem()
+                        );
                         pendingResult.finish();
                     }
 
                     @Override
                     public void onError(Throwable error) {
                         Log.e(TAG, "SMS analysis failed", error);
+                        SmsNotificationHelper.showAnalysisErrorNotification(
+                                context.getApplicationContext(),
+                                finalSender,
+                                finalBody
+                        );
                         pendingResult.finish();
                     }
                 }

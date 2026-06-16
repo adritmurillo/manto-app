@@ -42,6 +42,8 @@
 
     <string name="enable_sos_shortcut">Activar atajo SOS fisico</string>
     <string name="sos_shortcut_enabled">Atajo SOS fisico activo</string>
+    <string name="enable_sos_floating_button">Activar boton SOS flotante</string>
+    <string name="sos_floating_button_enabled">Boton SOS flotante activo</string>
     <string name="emergency_shortcut_service_description">Permite activar la alerta SOS con triple pulsacion de volumen abajo.</string>
     <string name="emergency_shortcut_service_summary">Triple volumen abajo para pedir ayuda aun con la app en segundo plano.</string>
     <string name="sms_permission_required">Concede permisos SMS para detectar mensajes reales. Luego podras activar Manto como app SMS si quieres el flujo completo.</string>

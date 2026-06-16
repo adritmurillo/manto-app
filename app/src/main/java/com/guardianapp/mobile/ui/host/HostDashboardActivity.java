@@ -41,7 +41,6 @@ import com.guardianapp.mobile.ui.main.MainActivity;
 import com.guardianapp.mobile.ui.common.FamilyAccessGuard;
 import com.guardianapp.mobile.ui.host.FamilyCircleActivity;
 import com.guardianapp.mobile.ui.security.LinkShieldActivity;
-import com.guardianapp.mobile.ui.security.SecurityMirrorActivity;
 
 import java.util.List;
 import java.util.Locale;
@@ -96,7 +95,8 @@ public class HostDashboardActivity extends AppCompatActivity {
         btnOpenEmergencyBanner = findViewById(R.id.btnOpenEmergencyBanner);
         btnMuteEmergencyAudio = findViewById(R.id.btnMuteEmergencyAudio);
         Button btnOpenLinkShieldDashboard = findViewById(R.id.btnOpenLinkShieldDashboard);
-        Button btnOpenSecurityMirrorDashboard = findViewById(R.id.btnOpenSecurityMirrorDashboard);
+        LinearLayout cardHostLinkShield = findViewById(R.id.cardHostLinkShield);
+        LinearLayout cardHostSmsAlerts = findViewById(R.id.cardHostSmsAlerts);
         TextView tvLogout = findViewById(R.id.tvLogoutHost);
         BottomNavigationView bottomNavHost = findViewById(R.id.bottomNavHost);
 
@@ -116,15 +116,18 @@ public class HostDashboardActivity extends AppCompatActivity {
         btnMuteEmergencyAudio.setOnClickListener(v -> toggleEmergencyAudio());
 
 
-        btnOpenLinkShieldDashboard.setOnClickListener(v -> {
+        View.OnClickListener openLinkShieldListener = v -> {
             Intent intent = new Intent(HostDashboardActivity.this, LinkShieldActivity.class);
             intent.putExtra("HOST_ID", miIdAnfitrion);
             startActivity(intent);
-        });
+        };
 
-        btnOpenSecurityMirrorDashboard.setOnClickListener(v -> {
-            Intent intent = new Intent(HostDashboardActivity.this, SecurityMirrorActivity.class);
-            intent.putExtra("HOST_ID", miIdAnfitrion);
+        btnOpenLinkShieldDashboard.setOnClickListener(openLinkShieldListener);
+        cardHostLinkShield.setOnClickListener(openLinkShieldListener);
+
+        cardHostSmsAlerts.setOnClickListener(v -> {
+            Intent intent = new Intent(HostDashboardActivity.this, HostSmsAlertsActivity.class);
+            intent.putExtra(HostSmsAlertsActivity.EXTRA_HOST_ID, miIdAnfitrion);
             startActivity(intent);
         });
 

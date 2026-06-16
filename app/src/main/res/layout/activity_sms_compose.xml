@@ -2,45 +2,72 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#F6F6F6"
-    android:gravity="center"
+    android:background="#F6F8F7"
     android:orientation="vertical"
-    android:padding="24dp">
+    android:padding="20dp">
 
     <TextView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:gravity="center"
-        android:text="Modulo de mensajeria en construccion"
-        android:textColor="#111111"
-        android:textSize="24sp"
+        android:text="Nuevo mensaje"
+        android:textColor="#101216"
+        android:textSize="26sp"
         android:textStyle="bold" />
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="20dp"
+        android:text="Destinatario"
+        android:textColor="#4C565C"
+        android:textSize="13sp" />
 
     <TextView
         android:id="@+id/tvComposeRecipient"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="16dp"
-        android:gravity="center"
-        android:text="Destino detectado"
-        android:textColor="#4C565C"
-        android:textSize="14sp" />
+        android:layout_marginTop="8dp"
+        android:background="@drawable/bg_link_shield_input"
+        android:padding="14dp"
+        android:text="Sin destinatario"
+        android:textColor="#101216"
+        android:textSize="16sp" />
 
     <TextView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="16dp"
-        android:gravity="center"
-        android:text="La lectura y analisis real de SMS ya esta activa. El envio y la bandeja completa se completan en el siguiente modulo."
+        android:layout_marginTop="20dp"
+        android:text="Mensaje"
         android:textColor="#4C565C"
-        android:textSize="14sp" />
+        android:textSize="13sp" />
+
+    <EditText
+        android:id="@+id/etComposeMessage"
+        android:layout_width="match_parent"
+        android:layout_height="180dp"
+        android:layout_marginTop="8dp"
+        android:background="@drawable/bg_security_surface"
+        android:gravity="top|start"
+        android:hint="Escribe tu mensaje"
+        android:inputType="textMultiLine"
+        android:padding="14dp"
+        android:textColor="#101216"
+        android:textColorHint="#94A1A0" />
+
+    <Button
+        android:id="@+id/btnComposeSend"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="24dp"
+        android:backgroundTint="@color/manto_green"
+        android:text="Enviar"
+        android:textColor="@android:color/white" />
 
     <Button
         android:id="@+id/btnComposeClose"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="24dp"
-        android:backgroundTint="#4FBBB2"
-        android:text="Cerrar"
-        android:textColor="@android:color/white" />
+        android:layout_marginTop="12dp"
+        android:text="Cerrar" />
+
 </LinearLayout>

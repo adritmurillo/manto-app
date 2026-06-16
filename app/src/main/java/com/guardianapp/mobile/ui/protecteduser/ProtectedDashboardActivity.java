@@ -1,6 +1,7 @@
 package com.guardianapp.mobile.ui.protecteduser;
 
 import android.Manifest;
+import android.content.ActivityNotFoundException;
 import android.content.pm.PackageManager;
 import android.content.Intent;
 import android.location.Location;
@@ -28,7 +29,11 @@ import com.guardianapp.mobile.data.api.EmergencyAudioRecordingResponse;
 import com.guardianapp.mobile.data.api.LinkResponse;
 import com.guardianapp.mobile.data.audio.EmergencyLiveAudioStreamer;
 import com.guardianapp.mobile.data.realtime.StompRealtimeClient;
+import com.guardianapp.mobile.overlay.OverlayPermissionHelper;
 import com.guardianapp.mobile.service.EmergencyShortcutAccessibilityService;
+import com.guardianapp.mobile.service.FloatingSosOverlayService;
+import com.guardianapp.mobile.sms.SmsAccessHelper;
+import com.guardianapp.mobile.sms.SmsRoleHelper;
 import com.guardianapp.mobile.ui.main.MainActivity;
 import com.guardianapp.mobile.ui.common.AppNavigator;
 import com.guardianapp.mobile.ui.common.FamilyAccessGuard;
@@ -53,6 +58,7 @@ public class ProtectedDashboardActivity extends AppCompatActivity {
     private static final String TAG = "ProtectedDashboard";
 
     private static final int LOCATION_PERMISSION_REQUEST_CODE = 1201;
+    private static final int SMS_PERMISSION_REQUEST_CODE = 1301;
     private static final long EMERGENCY_AUDIO_MAX_DURATION_MS = 30 * 60 * 1000L;
     private static final int EMERGENCY_VOLUME_PRESS_TARGET = 3;
     private static final long EMERGENCY_VOLUME_PRESS_WINDOW_MS = 1500L;
@@ -73,6 +79,9 @@ public class ProtectedDashboardActivity extends AppCompatActivity {
     private Runnable familyGuardRunnable;
     private int volumeDownPressCount;
     private long lastVolumeDownPressAt;
+    private boolean smsPermissionRequestedOnce;
+    private boolean smsRoleRequestedOnce;
+    private boolean smsSettingsPromptShown;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -90,30 +99,30 @@ public class ProtectedDashboardActivity extends AppCompatActivity {
             recoverLinkIdFromBackend();
         }
 
-        Button btnSimulateThreat = findViewById(R.id.btnSimulateThreat);
         Button btnSos = findViewById(R.id.btnSos);
         Button btnEnableShortcut = findViewById(R.id.btnEnableShortcut);
+        Button btnEnableFloatingSos = findViewById(R.id.btnEnableFloatingSos);
+        Button btnViewSms = findViewById(R.id.btnViewSms);
         TextView tvLogout = findViewById(R.id.tvLogoutProtected);
         emergencyLiveAudioStreamer = new EmergencyLiveAudioStreamer();
         persistProtectedSession();
 
-        // Flujo real de bloqueo por WebView seguro.
-        btnSimulateThreat.setOnClickListener(v -> {
-            Intent intent = new Intent(this, SecureBrowserActivity.class);
-            intent.putExtra("PROTECTED_ID", miIdProtegido);
-            intent.putExtra("LINK_ID", idDelVinculo);
-            startActivity(intent);
-        });
-
         btnSos.setOnClickListener(v -> validateAccessBeforeEmergency(this::showEmergencyConfirmationDialog));
         if (btnEnableShortcut != null) {
             btnEnableShortcut.setOnClickListener(v -> openAccessibilitySettings());
+        }
+        if (btnEnableFloatingSos != null) {
+            btnEnableFloatingSos.setOnClickListener(v -> toggleFloatingSos());
+        }
+        if (btnViewSms != null) {
+            btnViewSms.setOnClickListener(v -> openSmsInbox());
         }
 
         checkActiveEmergencyOnEntry();
 
         tvLogout.setOnClickListener(v -> {
             linkRealtimeClient.disconnect();
+            stopFloatingSosService();
             ProtectedSessionStore.clear(this);
             FirebaseAuth.getInstance().signOut();
             startActivity(new Intent(this, MainActivity.class));
@@ -139,6 +148,8 @@ public class ProtectedDashboardActivity extends AppCompatActivity {
         super.onResume();
         startFamilyGuard();
         updateShortcutButtonState();
+        updateFloatingSosButtonState();
+        ensureSmsProtectionReady();
     }
 
     @Override
@@ -524,6 +535,16 @@ public class ProtectedDashboardActivity extends AppCompatActivity {
                 pendingEmergencyAfterPermission = false;
                 Toast.makeText(this, "Permiso de ubicacion requerido para emergencia", Toast.LENGTH_SHORT).show();
             }
+            return;
+        }
+
+        if (requestCode == SMS_PERMISSION_REQUEST_CODE) {
+            if (SmsAccessHelper.hasSmsPermissions(this)) {
+                smsSettingsPromptShown = false;
+                requestDefaultSmsRoleIfNeeded();
+            } else {
+                showSmsSettingsDialog();
+            }
         }
     }
 
@@ -626,6 +647,106 @@ public class ProtectedDashboardActivity extends AppCompatActivity {
                 : getString(R.string.enable_sos_shortcut));
         btnEnableShortcut.setEnabled(!enabled);
         btnEnableShortcut.setAlpha(enabled ? 0.7f : 1f);
+    }
+
+    private void updateFloatingSosButtonState() {
+        Button btnEnableFloatingSos = findViewById(R.id.btnEnableFloatingSos);
+        if (btnEnableFloatingSos == null) {
+            return;
+        }
+        boolean running = FloatingSosOverlayService.isRunning();
+        btnEnableFloatingSos.setText(running
+                ? getString(R.string.sos_floating_button_enabled)
+                : getString(R.string.enable_sos_floating_button));
+        btnEnableFloatingSos.setEnabled(true);
+        btnEnableFloatingSos.setAlpha(1f);
+    }
+
+    private void toggleFloatingSos() {
+        if (!OverlayPermissionHelper.canDrawOverlays(this)) {
+            new AlertDialog.Builder(this)
+                    .setTitle("Permiso overlay requerido")
+                    .setMessage("Permite a Manto mostrarse sobre otras apps para usar el boton SOS flotante.")
+                    .setNegativeButton("Cancelar", null)
+                    .setPositiveButton("Abrir ajustes", (dialog, which) -> OverlayPermissionHelper.openOverlaySettings(this))
+                    .show();
+            return;
+        }
+
+        if (FloatingSosOverlayService.isRunning()) {
+            stopFloatingSosService();
+            Toast.makeText(this, "Boton SOS flotante desactivado", Toast.LENGTH_SHORT).show();
+        } else {
+            startFloatingSosService();
+            Toast.makeText(this, "Intentando activar boton SOS flotante", Toast.LENGTH_SHORT).show();
+        }
+        updateFloatingSosButtonState();
+    }
+
+    private void startFloatingSosService() {
+        Intent intent = new Intent(this, FloatingSosOverlayService.class);
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
+            startForegroundService(intent);
+        } else {
+            startService(intent);
+        }
+    }
+
+    private void stopFloatingSosService() {
+        stopService(new Intent(this, FloatingSosOverlayService.class));
+    }
+
+    private void openSmsInbox() {
+        Intent intent = new Intent(this, ProtectedSmsInboxActivity.class);
+        startActivity(intent);
+    }
+
+    private void ensureSmsProtectionReady() {
+        if (!SmsAccessHelper.hasSmsPermissions(this)) {
+            if (!smsPermissionRequestedOnce) {
+                smsPermissionRequestedOnce = true;
+                SmsAccessHelper.requestSmsPermissions(this, SMS_PERMISSION_REQUEST_CODE);
+            } else if (!smsSettingsPromptShown) {
+                showSmsSettingsDialog();
+            }
+            return;
+        }
+
+        smsSettingsPromptShown = false;
+        requestDefaultSmsRoleIfNeeded();
+    }
+
+    private void requestDefaultSmsRoleIfNeeded() {
+        if (SmsRoleHelper.isDefaultSmsApp(this)) {
+            return;
+        }
+        if (!SmsRoleHelper.canRequestDefaultRole(this)) {
+            Toast.makeText(this, "Tu dispositivo no permite asignar el rol SMS desde esta pantalla", Toast.LENGTH_LONG).show();
+            return;
+        }
+        if (smsRoleRequestedOnce) {
+            return;
+        }
+        smsRoleRequestedOnce = true;
+        try {
+            SmsRoleHelper.requestDefaultSmsRole(this);
+        } catch (ActivityNotFoundException ex) {
+            Toast.makeText(this, "No se pudo abrir el selector de app SMS", Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    private void showSmsSettingsDialog() {
+        if (smsSettingsPromptShown) {
+            return;
+        }
+        smsSettingsPromptShown = true;
+
+        new AlertDialog.Builder(this)
+                .setTitle("Permiso SMS requerido")
+                .setMessage("Tu telefono esta bloqueando el acceso a SMS. Abre los ajustes de la app, permite SMS y vuelve a Manto para activar la proteccion en tiempo real.")
+                .setNegativeButton("Mas tarde", null)
+                .setPositiveButton("Abrir ajustes", (dialog, which) -> SmsAccessHelper.openAppDetailsSettings(this))
+                .show();
     }
 
     private void validateAccessBeforeEmergency(Runnable onAllowed) {

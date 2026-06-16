@@ -12,6 +12,10 @@ public class SmsThreatAlertResponse {
     private String analysisReason;
     private String status;
     private boolean urlAllowed;
+    private String createdAt;
+    private String resolvedAt;
+    private String resolutionNote;
+    private long minutesPending;
 
     public String getId() {
         return id;
@@ -43,5 +47,21 @@ public class SmsThreatAlertResponse {
 
     public boolean isUrlAllowed() {
         return urlAllowed;
+    }
+
+    public String getCreatedAt() {
+        return createdAt;
+    }
+
+    public String getResolvedAt() {
+        return resolvedAt;
+    }
+
+    public String getResolutionNote() {
+        return resolutionNote;
+    }
+
+    public long getMinutesPending() {
+        return minutesPending;
     }
 }

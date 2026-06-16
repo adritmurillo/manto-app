@@ -10,6 +10,8 @@
     <uses-permission android:name="android.permission.RECORD_AUDIO" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE" />
+    <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
     <uses-permission android:name="android.permission.RECEIVE_SMS" />
     <uses-permission android:name="android.permission.READ_SMS" />
     <uses-permission android:name="android.permission.SEND_SMS" />
@@ -31,16 +33,14 @@
             android:name=".ui.security.LinkShieldActivity"
             android:exported="false" />
         <activity
-            android:name=".ui.security.SecurityMirrorActivity"
+            android:name=".ui.protecteduser.ProtectedSmsInboxActivity"
             android:exported="false" />
         <activity
             android:name=".ui.security.SmsComposeActivity"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.SENDTO" />
-
                 <category android:name="android.intent.category.DEFAULT" />
-
                 <data android:scheme="sms" />
                 <data android:scheme="smsto" />
                 <data android:scheme="mms" />
@@ -96,6 +96,14 @@
             android:name=".service.EmergencyLiveAudioService"
             android:exported="false"
             android:foregroundServiceType="mediaPlayback" />
+        <service
+            android:name=".service.FloatingSosOverlayService"
+            android:exported="false"
+            android:foregroundServiceType="specialUse">
+            <property
+                android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
+                android:value="floating_sos_emergency_button" />
+        </service>
         <receiver
             android:name=".sms.IncomingSmsReceiver"
             android:exported="true"
@@ -115,6 +123,9 @@
                 <data android:mimeType="application/vnd.wap.mms-message" />
             </intent-filter>
         </receiver>
+        <activity
+            android:name=".ui.host.HostSmsAlertsActivity"
+            android:exported="false" />
         <activity
             android:name=".ui.protecteduser.ProtectedDashboardActivity"
             android:exported="false" />

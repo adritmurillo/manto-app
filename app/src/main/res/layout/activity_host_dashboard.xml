@@ -93,10 +93,13 @@
             </LinearLayout>
 
             <LinearLayout
+                android:id="@+id/cardHostLinkShield"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="14dp"
                 android:background="@drawable/bg_security_surface"
+                android:clickable="true"
+                android:focusable="true"
                 android:orientation="vertical"
                 android:padding="14dp">
 
@@ -157,10 +160,13 @@
             </LinearLayout>
 
             <LinearLayout
+                android:id="@+id/cardHostSmsAlerts"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="14dp"
                 android:background="@drawable/bg_security_surface"
+                android:clickable="true"
+                android:focusable="true"
                 android:orientation="vertical"
                 android:padding="14dp">
 
@@ -300,13 +306,6 @@
                 android:layout_height="wrap_content"
                 android:layout_marginTop="10dp"
                 android:text="Ver Escudo de Enlaces" />
-
-            <Button
-                android:id="@+id/btnOpenSecurityMirrorDashboard"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="10dp"
-                android:text="Ver Espejo de Seguridad" />
 
             <TextView
                 android:id="@+id/tvLogoutHost"

@@ -3,7 +3,9 @@ package com.guardianapp.mobile.ui.security;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
+import android.widget.EditText;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
 
@@ -18,11 +20,19 @@ public class SmsComposeActivity extends AppCompatActivity {
 
         String target = resolveTarget(getIntent());
         TextView tvRecipient = findViewById(R.id.tvComposeRecipient);
-        if (target != null && !target.isBlank()) {
-            tvRecipient.setText("Destino detectado: " + target);
+        EditText etMessage = findViewById(R.id.etComposeMessage);
+
+        tvRecipient.setText(target == null || target.isBlank() ? "Sin destinatario" : target);
+
+        String body = getIntent() != null ? getIntent().getStringExtra("sms_body") : null;
+        if (body != null && !body.isBlank()) {
+            etMessage.setText(body);
         }
 
         findViewById(R.id.btnComposeClose).setOnClickListener(v -> finish());
+        findViewById(R.id.btnComposeSend).setOnClickListener(v ->
+                Toast.makeText(this, "Envio SMS se completara en el siguiente modulo", Toast.LENGTH_SHORT).show()
+        );
     }
 
     private String resolveTarget(Intent intent) {
