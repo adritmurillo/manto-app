@@ -3,63 +3,69 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:fillViewport="true"
-    android:background="@color/manto_background">
+    android:background="@color/manto_background"
+    android:fillViewport="true">
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:gravity="center_horizontal"
         android:orientation="vertical"
-        android:padding="24dp"
-        android:gravity="center_horizontal">
+        android:padding="24dp">
 
-    <TextView
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="Estás protegido"
-        android:textSize="28sp"
-        android:textStyle="bold"
-        android:textAlignment="center"
-        android:layout_marginTop="24dp"/>
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="24dp"
+            android:text="Estas protegido"
+            android:textAlignment="center"
+            android:textSize="28sp"
+            android:textStyle="bold" />
 
-    <TextView
-        android:id="@+id/tvHostName"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="Tu familiar está cuidando de ti"
-        android:textSize="16sp"
-        android:textColor="@color/manto_gray_text"
-        android:textAlignment="center"
-        android:layout_marginBottom="48dp"/>
+        <TextView
+            android:id="@+id/tvHostName"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="48dp"
+            android:text="Tu familiar esta cuidando de ti"
+            android:textAlignment="center"
+            android:textColor="@color/manto_gray_text"
+            android:textSize="16sp" />
 
-    <com.google.android.material.button.MaterialButton
-        android:id="@+id/btnSos"
-        android:layout_width="200dp"
-        android:layout_height="200dp"
-        android:text="SOS"
-        android:textSize="48sp"
-        android:textStyle="bold"
-        app:cornerRadius="100dp"
-        android:backgroundTint="@android:color/holo_red_dark"
-        android:layout_marginBottom="32dp"/>
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnSos"
+            android:layout_width="200dp"
+            android:layout_height="200dp"
+            android:layout_marginBottom="32dp"
+            android:backgroundTint="@android:color/holo_red_dark"
+            android:text="SOS"
+            android:textSize="48sp"
+            android:textStyle="bold"
+            app:cornerRadius="100dp" />
 
-    <Button
-        android:id="@+id/btnEnableShortcut"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="@string/enable_sos_shortcut"
-        style="@style/Widget.MaterialComponents.Button.OutlinedButton"
-        android:layout_marginBottom="12dp"/>
+        <Button
+            android:id="@+id/btnEnableShortcut"
+            style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="12dp"
+            android:text="@string/enable_sos_shortcut" />
 
-    <Button
-        android:id="@+id/btnSimulateThreat"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="DEMO: Simular SMS Sospechoso"
-        style="@style/Widget.MaterialComponents.Button.OutlinedButton"
-        android:textColor="@android:color/holo_orange_dark"
-        app:strokeColor="@android:color/holo_orange_dark"
-        android:layout_marginBottom="12dp"/>
+        <Button
+            android:id="@+id/btnEnableFloatingSos"
+            style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="12dp"
+            android:text="@string/enable_sos_floating_button" />
+
+        <Button
+            android:id="@+id/btnViewSms"
+            style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="12dp"
+            android:text="Ver SMS" />
 
         <Space
             android:layout_width="match_parent"
@@ -69,10 +75,10 @@
             android:id="@+id/tvLogoutProtected"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Cerrar Sesión"
-            android:textColor="@android:color/holo_red_dark"
             android:padding="16dp"
-            android:textStyle="bold"/>
+            android:text="Cerrar sesion"
+            android:textColor="@android:color/holo_red_dark"
+            android:textStyle="bold" />
 
     </LinearLayout>
 </ScrollView>

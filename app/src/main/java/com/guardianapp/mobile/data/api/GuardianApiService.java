@@ -130,6 +130,9 @@ public interface GuardianApiService {
     @GET("api/v1/sms-threat-alerts/pending")
     Call<List<SmsThreatAlertResponse>> getPendingSmsThreatAlerts(@Header("X-User-Id") String hostId);
 
+    @GET("api/v1/sms-threat-alerts/history")
+    Call<List<SmsThreatAlertResponse>> getSmsThreatHistory(@Header("X-User-Id") String hostId);
+
     @PUT("api/v1/sms-threat-alerts/{id}/resolve")
     Call<SmsThreatAlertResponse> resolveSmsThreatAlert(
             @Path("id") String alertId,
