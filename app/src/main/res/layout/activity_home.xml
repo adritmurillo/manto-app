@@ -18,6 +18,7 @@
             android:layout_height="wrap_content"
             android:layout_gravity="end"
             android:text="Cerrar sesion"
+            android:fontFamily="@font/manrope_regular"
             android:textColor="@color/manto_green"
             android:textStyle="bold"
             android:padding="8dp" />
@@ -168,8 +169,8 @@
                     android:textColor="@color/black"
                     android:textAllCaps="false"
                     android:textSize="15dp"
-                    android:drawableStart="@android:drawable/ic_popup_sync"
-                    android:drawablePadding="4dp"
+                    android:drawableStart="@drawable/mdi_reload"
+                    android:drawablePadding="1dp"
                     android:background="@drawable/bg_generar_nuevo"/>
 
                 <androidx.appcompat.widget.AppCompatButton
@@ -183,6 +184,8 @@
                     android:text="Compartir"
                     android:textColor="#FFFFFF"
                     android:textAllCaps="false"
+                    android:drawableStart="@drawable/mdi_share_variant"
+                    android:drawablePadding="1dp"
                     android:background="@drawable/bg_iniciar_sesion_rounded"/>
 
             </LinearLayout>
@@ -230,7 +233,7 @@
             android:text="Vincular"
             android:textAllCaps="false"
             android:textColor="@android:color/white"
-            android:textSize="18sp"
+            android:textSize="21sp"
             android:textStyle="bold" />
 
         <androidx.appcompat.widget.AppCompatButton
@@ -250,7 +253,7 @@
             android:id="@+id/btnSkipForNow"
             android:layout_width="match_parent"
             android:layout_height="48dp"
-            android:layout_marginTop="12dp"
+            android:layout_marginTop="16dp"
             android:background="@drawable/bg_generar_nuevo"
             android:fontFamily="@font/manrope_regular"
             android:text="Omitir por ahora"

@@ -27,6 +27,7 @@
             android:layout_weight="1"
             android:gravity="center"
             android:text="Espejo de seguridad"
+            android:fontFamily="@font/manrope_regular"
             android:textColor="#127F73"
             android:textSize="24sp"
             android:textStyle="bold" />
@@ -37,6 +38,7 @@
         android:layout_height="wrap_content"
         android:layout_marginTop="14dp"
         android:text="SMS Sospechoso"
+        android:fontFamily="@font/manrope_regular"
         android:textColor="#101010"
         android:textSize="32sp"
         android:textStyle="bold" />
@@ -47,6 +49,7 @@
         android:layout_marginTop="4dp"
         android:text="Detectado por el Espejo de Seguridad en tiempo real"
         android:textColor="#4C4C4C"
+        android:fontFamily="@font/manrope_regular"
         android:textSize="13sp" />
 
     <LinearLayout
@@ -64,6 +67,7 @@
             android:layout_height="wrap_content"
             android:text="Activa Manto como app SMS para analizar mensajes reales entrantes."
             android:textColor="#1B1F22"
+            android:fontFamily="@font/manrope_regular"
             android:textSize="13sp" />
 
         <Button
@@ -73,6 +77,7 @@
             android:layout_marginTop="10dp"
             android:backgroundTint="#4FBBB2"
             android:text="Activar como app SMS"
+            android:fontFamily="@font/manrope_regular"
             android:textColor="@android:color/white" />
     </LinearLayout>
 
@@ -89,6 +94,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:hint="Remitente"
+            android:fontFamily="@font/manrope_regular"
             android:inputType="text"
             android:textColor="#111111"
             android:textColorHint="#6E6E6E"
@@ -101,6 +107,7 @@
             android:layout_marginTop="8dp"
             android:hint="Contenido del mensaje"
             android:inputType="textMultiLine"
+            android:fontFamily="@font/manrope_regular"
             android:maxLines="3"
             android:textColor="#111111"
             android:textColorHint="#6E6E6E"
@@ -112,6 +119,7 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="8dp"
             android:hint="URL detectada"
+            android:fontFamily="@font/manrope_regular"
             android:inputType="textUri"
             android:textColor="#111111"
             android:textColorHint="#6E6E6E"
@@ -129,6 +137,7 @@
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
                 android:text="Analizar"
+                android:fontFamily="@font/manrope_regular"
                 android:backgroundTint="#4F9E97"
                 android:textColor="@android:color/white" />
 
@@ -142,6 +151,7 @@
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
                 android:text="Ver escudo"
+                android:fontFamily="@font/manrope_regular"
                 android:backgroundTint="#D2E2DF"
                 android:textColor="#1D736B" />
         </LinearLayout>
@@ -159,6 +169,7 @@
             android:layout_height="wrap_content"
             android:layout_weight="1"
             android:text="Simular phishing"
+            android:fontFamily="@font/manrope_regular"
             android:backgroundTint="#F7CBCD"
             android:textColor="#9E373A" />
 
@@ -172,6 +183,7 @@
             android:layout_height="wrap_content"
             android:layout_weight="1"
             android:text="Simular whitelist"
+            android:fontFamily="@font/manrope_regular"
             android:backgroundTint="#CAE7DD"
             android:textColor="#1D736B" />
     </LinearLayout>
@@ -184,6 +196,7 @@
         android:gravity="center_vertical"
         android:paddingStart="16dp"
         android:text="Buscar remitente o mensaje"
+        android:fontFamily="@font/manrope_regular"
         android:textColor="#8C9492"
         android:textSize="14sp" />
 
@@ -199,6 +212,7 @@
             android:layout_height="wrap_content"
             android:layout_weight="1"
             android:background="@drawable/bg_chip_safe"
+            android:fontFamily="@font/manrope_regular"
             android:text="TODOS"
             android:textSize="11sp" />
 
@@ -210,6 +224,7 @@
             android:layout_height="wrap_content"
             android:layout_weight="1"
             android:background="@drawable/bg_chip_neutral"
+            android:fontFamily="@font/manrope_regular"
             android:text="RECIBIDOS"
             android:textSize="11sp" />
 
@@ -221,6 +236,7 @@
             android:layout_height="wrap_content"
             android:layout_weight="1"
             android:background="@drawable/bg_chip_neutral"
+            android:fontFamily="@font/manrope_regular"
             android:text="CUARENTENA"
             android:textSize="11sp" />
     </LinearLayout>
@@ -231,6 +247,7 @@
         android:layout_height="wrap_content"
         android:layout_marginTop="10dp"
         android:text="Bloqueados por seguridad"
+        android:fontFamily="@font/manrope_regular"
         android:textStyle="bold"
         android:textColor="#141414" />
 
@@ -240,6 +257,7 @@
         android:layout_height="wrap_content"
         android:layout_marginTop="4dp"
         android:text="0 recibidos seguros, 0 en cuarentena"
+        android:fontFamily="@font/manrope_regular"
         android:textColor="#6A6A6A"
         android:textSize="12sp" />
 
