@@ -18,6 +18,7 @@
     <uses-permission android:name="android.permission.RECEIVE_MMS" />
     <uses-permission android:name="android.permission.RECEIVE_WAP_PUSH" />
     <uses-feature android:name="android.hardware.telephony" android:required="false" />
+
     <application
         android:allowBackup="true"
         android:dataExtractionRules="@xml/data_extraction_rules"
@@ -29,15 +30,11 @@
         android:theme="@style/Theme.Guardianmobile"
         android:usesCleartextTraffic="true"
         tools:targetApi="31">
-        <activity
-            android:name=".ui.security.LinkShieldActivity"
-            android:exported="false" />
-        <activity
-            android:name=".ui.protecteduser.ProtectedSmsInboxActivity"
-            android:exported="false" />
-        <activity
-            android:name=".ui.security.SmsComposeActivity"
-            android:exported="true">
+
+        <activity android:name=".ui.security.LinkShieldActivity" android:exported="false" />
+        <activity android:name=".ui.protecteduser.ProtectedSmsInboxActivity" android:exported="false" />
+
+        <activity android:name=".ui.security.SmsComposeActivity" android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.SENDTO" />
                 <category android:name="android.intent.category.DEFAULT" />
@@ -47,40 +44,29 @@
                 <data android:scheme="mmsto" />
             </intent-filter>
         </activity>
-        <activity
-            android:name=".ui.protecteduser.AppBlockedActivity"
-            android:exported="false" />
-        <activity
-            android:name=".ui.protecteduser.SecureBrowserActivity"
-            android:exported="false" />
-        <activity
-            android:name=".ui.host.HostDashboardActivity"
-            android:exported="false" />
-        <activity
-            android:name=".ui.host.FamilyCircleActivity"
-            android:exported="false" />
-        <service
-            android:name=".data.notifications.GuardianFirebaseMessagingService"
-            android:exported="false">
+
+        <activity android:name=".ui.protecteduser.AppBlockedActivity" android:exported="false" />
+        <activity android:name=".ui.protecteduser.SecureBrowserActivity" android:exported="false" />
+        <activity android:name=".ui.host.HostDashboardActivity" android:exported="false" />
+        <activity android:name=".ui.host.FamilyCircleActivity" android:exported="false" />
+
+        <service android:name=".data.notifications.GuardianFirebaseMessagingService" android:exported="false">
             <intent-filter>
                 <action android:name="com.google.firebase.MESSAGING_EVENT" />
             </intent-filter>
         </service>
-        <service
-            android:name=".sms.RespondViaMessageService"
-            android:exported="true"
-            android:permission="android.permission.SEND_RESPOND_VIA_MESSAGE">
+
+        <service android:name=".sms.RespondViaMessageService" android:exported="true" android:permission="android.permission.SEND_RESPOND_VIA_MESSAGE">
             <intent-filter>
                 <action android:name="android.intent.action.RESPOND_VIA_MESSAGE" />
-
                 <category android:name="android.intent.category.DEFAULT" />
-
                 <data android:scheme="sms" />
                 <data android:scheme="smsto" />
                 <data android:scheme="mms" />
                 <data android:scheme="mmsto" />
             </intent-filter>
         </service>
+
         <service
             android:name=".service.EmergencyShortcutAccessibilityService"
             android:enabled="true"
@@ -90,99 +76,74 @@
             <intent-filter>
                 <action android:name="android.accessibilityservice.AccessibilityService" />
             </intent-filter>
-
             <meta-data
                 android:name="android.accessibilityservice"
                 android:resource="@xml/emergency_shortcut_accessibility_service" />
         </service>
+
         <service
-            android:name=".service.EmergencyLiveAudioService"
-            android:exported="false"
-            android:foregroundServiceType="mediaPlayback" />
-        <service
-            android:name=".service.FloatingSosOverlayService"
-            android:exported="false"
-            android:foregroundServiceType="specialUse">
-            <property
-                android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
-                android:value="floating_sos_emergency_button" />
+            android:name=".service.AppBlockerService"
+            android:label="Escudo Manto (Bloqueo de Apps)"
+            android:permission="android.permission.BIND_ACCESSIBILITY_SERVICE"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.accessibilityservice.AccessibilityService" />
+            </intent-filter>
+            <meta-data
+                android:name="android.accessibilityservice"
+                android:resource="@xml/accessibility_service_config" />
         </service>
-        <receiver
-            android:name=".sms.IncomingSmsReceiver"
-            android:exported="true"
-            android:permission="android.permission.BROADCAST_SMS">
+        <service android:name=".service.EmergencyLiveAudioService" android:exported="false" android:foregroundServiceType="mediaPlayback" />
+
+        <service android:name=".service.FloatingSosOverlayService" android:exported="false" android:foregroundServiceType="specialUse">
+            <property android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE" android:value="floating_sos_emergency_button" />
+        </service>
+
+        <receiver android:name=".sms.IncomingSmsReceiver" android:exported="true" android:permission="android.permission.BROADCAST_SMS">
             <intent-filter android:priority="2147483647">
                 <action android:name="android.provider.Telephony.SMS_DELIVER" />
                 <action android:name="android.provider.Telephony.SMS_RECEIVED" />
             </intent-filter>
         </receiver>
-        <receiver
-            android:name=".sms.MmsDeliverReceiver"
-            android:exported="true"
-            android:permission="android.permission.BROADCAST_WAP_PUSH">
+
+        <receiver android:name=".sms.MmsDeliverReceiver" android:exported="true" android:permission="android.permission.BROADCAST_WAP_PUSH">
             <intent-filter>
                 <action android:name="android.provider.Telephony.WAP_PUSH_DELIVER" />
-
                 <data android:mimeType="application/vnd.wap.mms-message" />
             </intent-filter>
         </receiver>
-        <activity
-            android:name=".ui.host.HostSmsAlertsActivity"
-            android:exported="false" />
-        <activity
-            android:name=".ui.protecteduser.ProtectedDashboardActivity"
-            android:exported="false" />
-        <activity
-            android:name=".ui.main.HomeActivity"
-            android:exported="false" />
-        <activity
-            android:name=".ui.main.DeviceSetupActivity"
-            android:exported="false" />
-        <activity
-            android:name=".ui.host.HostCodeSetupActivity"
-            android:exported="false" />
-        <activity
-            android:name=".ui.auth.JoinCircleActivity"
-            android:exported="false" />
-        <activity
-            android:name=".ui.main.MainActivity"
-            android:exported="true">
+
+        <activity android:name=".ui.host.HostSmsAlertsActivity" android:exported="false" />
+        <activity android:name=".ui.protecteduser.ProtectedDashboardActivity" android:exported="false" />
+        <activity android:name=".ui.main.HomeActivity" android:exported="false" />
+        <activity android:name=".ui.main.DeviceSetupActivity" android:exported="false" />
+        <activity android:name=".ui.host.HostCodeSetupActivity" android:exported="false" />
+        <activity android:name=".ui.auth.JoinCircleActivity" android:exported="false" />
+
+        <activity android:name=".ui.main.MainActivity" android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
-
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-        <activity
-            android:name=".ui.host.HostAppControlActivity"
-            android:exported="false" />
-        <activity
-            android:name=".ui.invite.InviteEntryActivity"
-            android:exported="true">
+
+        <activity android:name=".ui.host.HostAppControlActivity" android:exported="false" />
+
+        <activity android:name=".ui.invite.InviteEntryActivity" android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.VIEW" />
                 <category android:name="android.intent.category.DEFAULT" />
                 <category android:name="android.intent.category.BROWSABLE" />
-
-                <data
-                    android:scheme="manto"
-                    android:host="invite" />
+                <data android:scheme="manto" android:host="invite" />
             </intent-filter>
-
-            <!-- Optional Android App Links (requires hosting assetlinks.json on the domain).
-                 Configure INVITE_LINK_HOST via manifest placeholders when you have a free HTTPS host. -->
             <intent-filter android:autoVerify="true">
                 <action android:name="android.intent.action.VIEW" />
                 <category android:name="android.intent.category.DEFAULT" />
                 <category android:name="android.intent.category.BROWSABLE" />
-
-                <data
-                    android:scheme="https"
-                    android:host="${INVITE_LINK_HOST}"
-                    android:pathPrefix="/i/" />
+                <data android:scheme="https" android:host="${INVITE_LINK_HOST}" android:pathPrefix="/i/" />
             </intent-filter>
         </activity>
+
         <activity android:name=".ui.auth.RegisterActivity" />
     </application>
-
 </manifest>

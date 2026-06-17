@@ -13,7 +13,6 @@ import android.os.Handler;
 import android.os.Looper;
 import android.provider.Settings;
 import android.view.KeyEvent;
-import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -21,6 +20,7 @@ import android.util.Log;
 
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.app.ActivityCompat;
 
 import com.guardianapp.mobile.R;
 import com.guardianapp.mobile.data.api.EmergencyAlertResponse;
@@ -40,11 +40,11 @@ import com.guardianapp.mobile.ui.common.AppNavigator;
 import com.guardianapp.mobile.ui.common.FamilyAccessGuard;
 import com.google.firebase.auth.FirebaseAuth;
 
-import androidx.core.app.ActivityCompat;
-
 import java.io.File;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.ArrayList;
+import java.util.List;
 
 import okhttp3.MediaType;
 import okhttp3.MultipartBody;
@@ -55,17 +55,7 @@ import retrofit2.Callback;
 import retrofit2.Response;
 
 import android.content.pm.ApplicationInfo;
-import android.content.pm.PackageManager;
-import android.util.Log;
 
-import java.util.ArrayList;
-import java.util.List;
-
-import retrofit2.Call;
-import retrofit2.Callback;
-import retrofit2.Response;
-
-import com.guardianapp.mobile.data.api.RetrofitClient;
 import com.guardianapp.mobile.data.api.GuardianApiService;
 import com.guardianapp.mobile.data.api.ReportInstalledAppsRequest;
 import com.guardianapp.mobile.data.api.BlockedAppResponse;
@@ -149,7 +139,41 @@ public class ProtectedDashboardActivity extends AppCompatActivity {
         });
 
         connectRealtime();
-        syncAppControlData();
+
+        // ¡SOLUCIÓN AQUÍ! Ya no forzamos la sincronización ciegamente.
+        // Solo la ejecutamos si ya tenemos ambos IDs a la mano.
+        triggerSyncIfReady();
+    }
+
+    // NUEVO MÉTODO INTELIGENTE: Verifica que existan los IDs antes de llamar al servidor
+    private void triggerSyncIfReady() {
+        if (miIdProtegido != null && !miIdProtegido.isBlank()) {
+            android.util.Log.d(TAG, "ID Protegido confirmado. Buscando el grupo familiar...");
+
+            // 1. Le preguntamos al servidor en qué Grupo Familiar está tu hermano
+            RetrofitClient.getApiService().getMyFamilyGroups(miIdProtegido).enqueue(new retrofit2.Callback<java.util.List<com.guardianapp.mobile.data.api.FamilyGroupResponse>>() {
+                @Override
+                public void onResponse(retrofit2.Call<java.util.List<com.guardianapp.mobile.data.api.FamilyGroupResponse>> call, retrofit2.Response<java.util.List<com.guardianapp.mobile.data.api.FamilyGroupResponse>> response) {
+                    if (response.isSuccessful() && response.body() != null && !response.body().isEmpty()) {
+
+                        // ¡MAGIA! Extraemos el ID REAL de la familia.
+                        String realFamilyGroupId = response.body().get(0).getId();
+                        android.util.Log.d(TAG, "Grupo familiar encontrado: " + realFamilyGroupId);
+
+                        // 2. Ahora SÍ sincronizamos usando el cajón correcto
+                        syncAppControlData(miIdProtegido, realFamilyGroupId);
+
+                    } else {
+                        android.util.Log.e(TAG, "El protegido no está en un grupo familiar activo.");
+                    }
+                }
+
+                @Override
+                public void onFailure(retrofit2.Call<java.util.List<com.guardianapp.mobile.data.api.FamilyGroupResponse>> call, Throwable t) {
+                    android.util.Log.e(TAG, "Error de red buscando el grupo familiar: " + t.getMessage());
+                }
+            });
+        }
     }
 
     @Override
@@ -180,15 +204,18 @@ public class ProtectedDashboardActivity extends AppCompatActivity {
 
     private void recoverLinkIdFromBackend() {
         RetrofitClient.getApiService().getMyLinks(miIdProtegido)
-                .enqueue(new Callback<java.util.List<LinkResponse>>() {
+                .enqueue(new Callback<List<LinkResponse>>() {
                     @Override
-                    public void onResponse(Call<java.util.List<LinkResponse>> call,
-                                           Response<java.util.List<LinkResponse>> response) {
+                    public void onResponse(Call<List<LinkResponse>> call,
+                                           Response<List<LinkResponse>> response) {
                         if (response.isSuccessful() && response.body() != null) {
                             for (LinkResponse link : response.body()) {
                                 if (miIdProtegido.equals(link.getProtectedUserId()) && "ACTIVE".equals(link.getStatus())) {
                                     idDelVinculo = link.getId();
                                     persistProtectedSession();
+
+                                    // ¡SOLUCIÓN AQUÍ! Ahora que el servidor nos dio el ID correcto, descargamos las apps.
+                                    triggerSyncIfReady();
                                     break;
                                 }
                             }
@@ -196,7 +223,8 @@ public class ProtectedDashboardActivity extends AppCompatActivity {
                     }
 
                     @Override
-                    public void onFailure(Call<java.util.List<LinkResponse>> call, Throwable t) {
+                    public void onFailure(Call<List<LinkResponse>> call, Throwable t) {
+                        Log.e(TAG, "Fallo al recuperar el Link ID", t);
                     }
                 });
     }
@@ -358,10 +386,10 @@ public class ProtectedDashboardActivity extends AppCompatActivity {
             return;
         }
         RetrofitClient.getApiService().getActiveEmergenciesForProtected(miIdProtegido)
-                .enqueue(new Callback<java.util.List<EmergencyAlertResponse>>() {
+                .enqueue(new Callback<List<EmergencyAlertResponse>>() {
                     @Override
-                    public void onResponse(Call<java.util.List<EmergencyAlertResponse>> call,
-                                           Response<java.util.List<EmergencyAlertResponse>> response) {
+                    public void onResponse(Call<List<EmergencyAlertResponse>> call,
+                                           Response<List<EmergencyAlertResponse>> response) {
                         if (response.isSuccessful() && response.body() != null && !response.body().isEmpty()) {
                             EmergencyAlertResponse active = response.body().get(0);
                             if (active != null && active.getId() != null) {
@@ -374,7 +402,7 @@ public class ProtectedDashboardActivity extends AppCompatActivity {
                     }
 
                     @Override
-                    public void onFailure(Call<java.util.List<EmergencyAlertResponse>> call, Throwable t) {
+                    public void onFailure(Call<List<EmergencyAlertResponse>> call, Throwable t) {
                     }
                 });
     }
@@ -491,6 +519,7 @@ public class ProtectedDashboardActivity extends AppCompatActivity {
             }
         });
     }
+
     @SuppressLint("MissingPermission")
     private Location getBestLastKnownLocation() {
         if (!hasLocationPermission()) {
@@ -591,16 +620,19 @@ public class ProtectedDashboardActivity extends AppCompatActivity {
             return;
         }
         RetrofitClient.getApiService().getMyLinks(miIdProtegido)
-                .enqueue(new Callback<java.util.List<LinkResponse>>() {
+                .enqueue(new Callback<List<LinkResponse>>() {
                     @Override
-                    public void onResponse(Call<java.util.List<LinkResponse>> call,
-                                           Response<java.util.List<LinkResponse>> response) {
+                    public void onResponse(Call<List<LinkResponse>> call,
+                                           Response<List<LinkResponse>> response) {
                         if (response.isSuccessful() && response.body() != null) {
                             for (LinkResponse link : response.body()) {
                                 if (miIdProtegido.equals(link.getProtectedUserId())) {
                                     if ("ACTIVE".equals(link.getStatus())) {
                                         idDelVinculo = link.getId();
                                         persistProtectedSession();
+
+                                        // ¡SOLUCIÓN AQUÍ! Descargamos apps cuando la conexión en tiempo real confirma el vínculo
+                                        triggerSyncIfReady();
                                         return;
                                     }
                                 }
@@ -610,7 +642,7 @@ public class ProtectedDashboardActivity extends AppCompatActivity {
                     }
 
                     @Override
-                    public void onFailure(Call<java.util.List<LinkResponse>> call, Throwable t) {
+                    public void onFailure(Call<List<LinkResponse>> call, Throwable t) {
                     }
                 });
     }
@@ -771,9 +803,9 @@ public class ProtectedDashboardActivity extends AppCompatActivity {
 
     private void validateAccessBeforeEmergency(Runnable onAllowed) {
         FamilyAccessGuard.ensureProtectedLinked(this, miIdProtegido, () ->
-                RetrofitClient.getApiService().getMyLinks(miIdProtegido).enqueue(new Callback<java.util.List<LinkResponse>>() {
+                RetrofitClient.getApiService().getMyLinks(miIdProtegido).enqueue(new Callback<List<LinkResponse>>() {
                     @Override
-                    public void onResponse(Call<java.util.List<LinkResponse>> call, Response<java.util.List<LinkResponse>> response) {
+                    public void onResponse(Call<List<LinkResponse>> call, Response<List<LinkResponse>> response) {
                         if (!response.isSuccessful() || response.body() == null) {
                             Toast.makeText(ProtectedDashboardActivity.this, "No se pudo validar tu vinculo", Toast.LENGTH_SHORT).show();
                             return;
@@ -790,7 +822,7 @@ public class ProtectedDashboardActivity extends AppCompatActivity {
                     }
 
                     @Override
-                    public void onFailure(Call<java.util.List<LinkResponse>> call, Throwable t) {
+                    public void onFailure(Call<List<LinkResponse>> call, Throwable t) {
                         Toast.makeText(ProtectedDashboardActivity.this, "Error validando vinculo", Toast.LENGTH_SHORT).show();
                     }
                 })
@@ -801,21 +833,13 @@ public class ProtectedDashboardActivity extends AppCompatActivity {
     // SISTEMA DE CONTROL DE APPS (SINCRONIZACIÓN)
     // ==========================================
 
-    private void syncAppControlData() {
-        // 1. Regla de eficiencia: Solo sincronizamos si pasaron 24h o es la primera vez
+    private void syncAppControlData(String protectedUserId, String familyGroupId) {
         if (!BlockedAppsStore.shouldSync(this)) {
-            Log.d("AppControl", "Caché reciente. No es necesario sincronizar con el backend hoy.");
+            Log.d("AppControl", "Caché reciente...");
             return;
         }
 
-        // TODO: Extrae estos IDs reales de tu ProtectedSessionStore o SharedPreferences
-        String protectedUserId = "ID_DEL_USUARIO";
-        String familyGroupId = "ID_DEL_GRUPO_FAMILIAR";
-
-        // Ajusta esta línea según cómo instancies Retrofit en tu proyecto
         GuardianApiService apiService = RetrofitClient.getApiService();
-
-        // 2. Reportamos las apps y 3. Descargamos las reglas
         reportInstalledAppsToBackend(apiService, protectedUserId);
         downloadBlockedApps(apiService, protectedUserId, familyGroupId);
     }
@@ -857,19 +881,26 @@ public class ProtectedDashboardActivity extends AppCompatActivity {
                 if (response.isSuccessful() && response.body() != null) {
                     List<BlockedApp> localApps = new ArrayList<>();
                     for (BlockedAppResponse dto : response.body()) {
-                        localApps.add(new BlockedApp(dto.getPackageName(), dto.getAppName()));
+                        // Verificamos si los datos no llegan nulos
+                        if (dto.getPackageName() != null) {
+                            localApps.add(new BlockedApp(dto.getPackageName(), dto.getAppName()));
+                        }
                     }
 
-                    // Sobrescribimos el caché local del celular con la nueva lista negra
                     BlockedAppsStore.save(ProtectedDashboardActivity.this, localApps);
-                    Log.d("AppControl", "Restricciones de seguridad actualizadas en el celular.");
+
+                    // 🚨 EL TOAST DE RAYOS X 🚨
+                    Toast.makeText(ProtectedDashboardActivity.this,
+                            "🛡️ Escudo sincronizado: " + localApps.size() + " apps en lista negra.",
+                            Toast.LENGTH_LONG).show();
+                } else {
+                    Toast.makeText(ProtectedDashboardActivity.this, "❌ Error del servidor al descargar: " + response.code(), Toast.LENGTH_LONG).show();
                 }
             }
             @Override
             public void onFailure(Call<List<BlockedAppResponse>> call, Throwable t) {
-                Log.e("AppControl", "Error descargando restricciones: " + t.getMessage());
+                Toast.makeText(ProtectedDashboardActivity.this, "❌ Fallo de red: " + t.getMessage(), Toast.LENGTH_LONG).show();
             }
         });
     }
-
 }

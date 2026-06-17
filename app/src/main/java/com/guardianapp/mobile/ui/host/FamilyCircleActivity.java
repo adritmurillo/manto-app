@@ -23,6 +23,7 @@ import com.guardianapp.mobile.ui.common.FamilyAccessGuard;
 import com.guardianapp.mobile.ui.security.LinkShieldActivity;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 import retrofit2.Call;
 import retrofit2.Callback;
@@ -294,7 +295,7 @@ public class FamilyCircleActivity extends AppCompatActivity {
 
         List<FamilyGroupResponse.MemberResponse> candidates = currentGroup.getMembers().stream()
                 .filter(member -> member != null && member.getUserId() != null && !member.getUserId().equals(hostId))
-                .toList();
+                .collect(Collectors.toList());
 
         if (candidates.isEmpty()) {
             Toast.makeText(this, "No hay miembros removibles", Toast.LENGTH_SHORT).show();

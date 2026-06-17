@@ -18,9 +18,12 @@ import com.guardianapp.mobile.data.security.LinkShieldRepository;
 import com.guardianapp.mobile.ui.common.FamilyAccessGuard;
 import com.guardianapp.mobile.ui.host.FamilyCircleActivity;
 import com.guardianapp.mobile.ui.host.HostDashboardActivity;
+import com.guardianapp.mobile.data.api.RetrofitClient;
+import com.guardianapp.mobile.data.api.FamilyGroupResponse;
 
 import java.util.List;
 import java.util.Locale;
+import java.util.stream.Collectors;
 
 public class LinkShieldActivity extends AppCompatActivity {
 
@@ -40,6 +43,7 @@ public class LinkShieldActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_link_shield);
+
         hostId = getIntent() != null ? getIntent().getStringExtra("HOST_ID") : null;
 
         etAnalyzeUrl = findViewById(R.id.etAnalyzeUrl);
@@ -48,6 +52,7 @@ public class LinkShieldActivity extends AppCompatActivity {
         btnAnalyzeLink = findViewById(R.id.btnAnalyzeLink);
         btnBlockDomain = findViewById(R.id.btnBlockDomain);
         androidx.recyclerview.widget.RecyclerView rvBlocked = findViewById(R.id.rvLinkShieldBlocked);
+
         if (rvBlocked != null) {
             rvBlocked.setLayoutManager(new androidx.recyclerview.widget.LinearLayoutManager(this));
             rvBlocked.setAdapter(adapter);
@@ -58,8 +63,62 @@ public class LinkShieldActivity extends AppCompatActivity {
         btnBlockDomain.setOnClickListener(v -> blockDomain());
         adapter.setOnUnblockClickListener((item, position) -> unblockDomain(item));
 
+        android.widget.Button btnGoToAppControl = findViewById(R.id.btnGoToAppControl);
+        if (btnGoToAppControl != null) {
+            // Se invoca el método inteligente
+            btnGoToAppControl.setOnClickListener(v -> navigateToAppControlSafely());
+        }
+
         setupBottomNavigation();
         refreshBlockedList();
+    }
+
+    private void navigateToAppControlSafely() {
+        if (hostId == null) {
+            Toast.makeText(this, "Error: No hay sesión activa", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        Toast.makeText(this, "Conectando con el círculo familiar...", Toast.LENGTH_SHORT).show();
+
+        RetrofitClient.getApiService().getMyFamilyGroups(hostId).enqueue(new retrofit2.Callback<List<FamilyGroupResponse>>() {
+            @Override
+            public void onResponse(retrofit2.Call<List<FamilyGroupResponse>> call, retrofit2.Response<List<FamilyGroupResponse>> response) {
+                if (response.isSuccessful() && response.body() != null && !response.body().isEmpty()) {
+                    FamilyGroupResponse group = response.body().get(0);
+                    String linkId = group.getId();
+                    String protectedId = null;
+
+                    if (group.getMembers() != null) {
+                        for (FamilyGroupResponse.MemberResponse member : group.getMembers()) {
+                            if ("PROTECTED".equals(member.getRole())) {
+                                protectedId = member.getUserId();
+                                break;
+                            }
+                        }
+                    }
+
+                    if (protectedId == null) {
+                        Toast.makeText(LinkShieldActivity.this, "Aún no tienes a un usuario Protegido en tu círculo", Toast.LENGTH_LONG).show();
+                        return;
+                    }
+
+                    Intent intent = new Intent(LinkShieldActivity.this, com.guardianapp.mobile.ui.host.HostAppControlActivity.class);
+                    intent.putExtra("HOST_ID", hostId);
+                    intent.putExtra("LINK_ID", linkId);
+                    intent.putExtra("PROTECTED_ID", protectedId);
+                    startActivity(intent);
+
+                } else {
+                    Toast.makeText(LinkShieldActivity.this, "No se encontró el círculo familiar", Toast.LENGTH_SHORT).show();
+                }
+            }
+
+            @Override
+            public void onFailure(retrofit2.Call<List<FamilyGroupResponse>> call, Throwable t) {
+                Toast.makeText(LinkShieldActivity.this, "Error de red al buscar el círculo", Toast.LENGTH_SHORT).show();
+            }
+        });
     }
 
     @Override
@@ -236,7 +295,7 @@ public class LinkShieldActivity extends AppCompatActivity {
     private void refreshBlockedList() {
         List<SecurityAnalysisItem> items = SecurityAnalysisStore.getAll().stream()
                 .filter(SecurityAnalysisItem::isBlocked)
-                .toList();
+                .collect(Collectors.toList());
         adapter.setItems(items);
     }
 

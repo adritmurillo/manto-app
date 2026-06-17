@@ -51,4 +51,5 @@
     <string name="sms_role_active">Manto ya esta configurada como app SMS predeterminada.</string>
     <string name="sms_permission_request">Conceder permisos SMS</string>
     <string name="sms_role_request">Activar como app SMS</string>
+    <string name="app_blocker_description">Servicio de Manto para bloquear aplicaciones restringidas por el anfitrión.</string>
 </resources>
