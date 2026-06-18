@@ -25,7 +25,7 @@
             android:layout_width="80dp"
             android:layout_height="80dp"
             android:layout_gravity="center_horizontal"
-            android:layout_marginTop="32dp"
+            android:layout_marginTop="3dp"
             android:background="@drawable/bg_logo_rounded"
             android:contentDescription="@string/app_name"
             android:elevation="4dp"
@@ -93,7 +93,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:hint="@string/login_email_hint"
-                    app:startIconDrawable="@android:drawable/ic_dialog_email"
+                    app:startIconDrawable="@drawable/ic_outline_email"
                     style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
                     app:boxCornerRadiusTopStart="12dp"
                     app:boxCornerRadiusTopEnd="12dp"
@@ -124,7 +124,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:hint="@string/login_password_hint"
-                    app:startIconDrawable="@android:drawable/ic_secure"
+                    app:startIconDrawable="@drawable/ic_outline_lock"
                     app:passwordToggleEnabled="true"
                     style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
                     app:boxCornerRadiusTopStart="12dp"
@@ -147,8 +147,9 @@
                     android:layout_height="wrap_content"
                     android:text="@string/login_forgot_password"
                     android:gravity="end"
-                    android:textColor="@color/manto_green"
-                    android:layout_marginTop="8dp"
+                    android:fontFamily="@font/manrope_regular"
+                    android:textColor="#24807A"
+                    android:layout_marginTop="10dp"
                     android:layout_marginBottom="32dp"/>
 
                 <androidx.appcompat.widget.AppCompatButton

@@ -25,19 +25,22 @@
                 android:orientation="horizontal">
 
                 <ImageButton
-                    android:id="@+id/btnBackShield"
-                    android:layout_width="36dp"
-                    android:layout_height="36dp"
+                    android:id="@+id/btnBackFamilyCircle"
+                    android:layout_width="40dp"
+                    android:layout_height="40dp"
                     android:background="@android:color/transparent"
                     android:contentDescription="Volver"
-                    android:src="@android:drawable/ic_media_previous" />
+                    android:padding="8dp"
+                    android:src="@drawable/mdi_arrow_back" />
 
                 <TextView
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
+                    android:layout_marginStart="60dp"
                     android:layout_weight="1"
                     android:gravity="center"
                     android:text="Escudo de enlaces"
+                    android:fontFamily="@font/manrope_regular"
                     android:textColor="#0F7E74"
                     android:textSize="24sp"
                     android:textStyle="bold" />
@@ -49,7 +52,8 @@
                 android:layout_marginTop="26dp"
                 android:text="Análisis y Bloqueo en tiempo real"
                 android:textColor="#0E1115"
-                android:textSize="18sp"
+                android:fontFamily="@font/manrope_regular"
+                android:textSize="29sp"
                 android:textStyle="bold" />
 
             <TextView
@@ -58,6 +62,7 @@
                 android:layout_marginTop="12dp"
                 android:text="Verifica la seguridad de cualquier enlace o bloquea proactivamente los dominios que consideres peligrosos para proteger a tu familia"
                 android:textColor="#3D464A"
+                android:fontFamily="@font/manrope_regular"
                 android:textSize="18sp" />
 
             <LinearLayout
@@ -74,6 +79,7 @@
                     android:text="Enlace a analizar"
                     android:textColor="#101418"
                     android:textSize="20sp"
+                    android:fontFamily="@font/manrope_regular"
                     android:textStyle="bold" />
 
                 <EditText
@@ -91,13 +97,14 @@
                     android:textColor="#121212"
                     android:textColorHint="#7E8D8D" />
 
-                <Button
+                <androidx.appcompat.widget.AppCompatButton
                     android:id="@+id/btnAnalyzeLink"
                     android:layout_width="match_parent"
                     android:layout_height="56dp"
                     android:layout_marginTop="16dp"
                     android:background="@drawable/bg_link_shield_button_primary"
                     android:text="Analizar Link"
+                    android:fontFamily="@font/manrope_regular"
                     android:textAllCaps="false"
                     android:textColor="@android:color/white"
                     android:textSize="18sp"
@@ -118,6 +125,7 @@
                     android:text="Añadir a lista negra"
                     android:textColor="#101418"
                     android:textSize="20sp"
+                    android:fontFamily="@font/manrope_regular"
                     android:textStyle="bold" />
 
                 <EditText
@@ -135,13 +143,14 @@
                     android:textColor="#121212"
                     android:textColorHint="#7E8D8D" />
 
-                <Button
+                <androidx.appcompat.widget.AppCompatButton
                     android:id="@+id/btnBlockDomain"
                     android:layout_width="match_parent"
                     android:layout_height="56dp"
                     android:layout_marginTop="16dp"
-                    android:background="@drawable/bg_link_shield_button_danger"
+                    android:background="@drawable/bg_boton_rojo"
                     android:text="Bloquear Dominio"
+                    android:fontFamily="@font/manrope_regular"
                     android:textAllCaps="false"
                     android:textColor="@android:color/white"
                     android:textSize="18sp"
@@ -157,6 +166,7 @@
                 android:padding="12dp"
                 android:text="Resultado del análisis aparecerá aquí."
                 android:textColor="#324043"
+                android:fontFamily="@font/manrope_regular"
                 android:textSize="14sp" />
 
             <TextView
@@ -164,6 +174,7 @@
                 android:layout_height="wrap_content"
                 android:layout_marginTop="18dp"
                 android:text="Enlaces bloqueados"
+                android:fontFamily="@font/manrope_regular"
                 android:textColor="#0E1115"
                 android:textSize="18sp"
                 android:textStyle="bold" />

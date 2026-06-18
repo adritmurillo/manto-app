@@ -54,7 +54,7 @@
                 android:fontFamily="@font/manrope_regular"
                 android:gravity="center"
                 android:text="¿Quién usará este dispositivo?"
-                android:textColor="#111315"
+                android:textColor="@color/black"
                 android:textSize="36sp"
                 android:textStyle="bold" />
 
@@ -65,7 +65,7 @@
                 android:fontFamily="@font/manrope_regular"
                 android:gravity="center"
                 android:text="Personalizaremos la experiencia según el rol que desempeñes en el círculo familiar"
-                android:textColor="#4D5357"
+                android:textColor="@color/black"
                 android:textSize="16sp" />
 
             <com.google.android.material.card.MaterialCardView
@@ -114,7 +114,7 @@
                             android:layout_marginTop="4dp"
                             android:fontFamily="@font/manrope_regular"
                             android:text="Gestiona el círculo familiar, configura zonas seguras y recibe alertas en tiempo real."
-                            android:textColor="#4C565C"
+                            android:textColor="@color/black"
                             android:textSize="14sp" />
                     </LinearLayout>
                 </LinearLayout>
@@ -166,7 +166,7 @@
                             android:layout_marginTop="4dp"
                             android:fontFamily="@font/manrope_regular"
                             android:text="Comparte información de forma segura y accede a botones de pánico rápidos."
-                            android:textColor="#4C565C"
+                            android:textColor="@color/black"
                             android:textSize="14sp" />
                     </LinearLayout>
                 </LinearLayout>
@@ -192,6 +192,7 @@
                 android:layout_marginTop="16dp"
                 android:gravity="center"
                 android:text="Volver"
+                android:fontFamily="@font/manrope_regular"
                 android:textColor="@color/manto_green"
                 android:textSize="14sp"
                 android:textStyle="bold" />

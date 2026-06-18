@@ -1,9 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/new_manto_background"
-    android:fillViewport="true">
+    android:fillViewport="true"
+    android:background="@color/manto_background">
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -12,144 +13,231 @@
         android:padding="24dp">
 
         <TextView
-            android:id="@+id/tvBackFromHostSetup"
+            android:id="@+id/tvLogoutHome"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Volver"
+            android:layout_gravity="end"
+            android:text="Cerrar sesion"
+            android:fontFamily="@font/manrope_regular"
             android:textColor="@color/manto_green"
-            android:textStyle="bold" />
+            android:textStyle="bold"
+            android:padding="8dp" />
 
         <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
-            android:gravity="center"
-            android:text="Manto"
-            android:textColor="@color/manto_green"
-            android:textSize="24sp"
-            android:textStyle="bold" />
+            android:fontFamily="@font/plus_jakarta_sans_bold"
+            android:text="@string/login_title"
+            android:textSize="36sp"
+            android:textColor="#006B64"
+            android:textStyle="bold"
+            android:textAlignment="center"
+            android:layout_marginBottom="12dp"/>
 
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_gravity="center"
-            android:layout_marginTop="8dp"
-            android:background="@drawable/bg_role_setup_chip"
-            android:paddingStart="14dp"
-            android:paddingTop="6dp"
-            android:paddingEnd="14dp"
-            android:paddingBottom="6dp"
-            android:text="CONFIGURACIÓN DEL DISPOSITIVO"
-            android:textAllCaps="true"
-            android:textColor="#7B9692"
-            android:textSize="11sp"
-            android:textStyle="bold" />
+            android:layout_gravity="center_horizontal"
+            android:layout_marginBottom="16dp"
+            android:background="@drawable/bg_chip_config"
+            android:fontFamily="@font/plus_jakarta_sans_bold"
+            android:paddingStart="16dp"
+            android:paddingTop="8dp"
+            android:paddingEnd="16dp"
+            android:paddingBottom="8dp"
+            android:text="@string/configuracion"
+            android:textColor="#757575"
+            android:textSize="14sp"/>
 
         <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="16dp"
-            android:text="El corazón de tu hogar"
-            android:textColor="#111315"
-            android:textSize="30sp"
-            android:textStyle="bold" />
+            android:fontFamily="@font/manrope_regular"
+            android:text="@string/texto_config"
+            android:textSize="32sp"
+            android:textColor="@color/black"
+            android:textStyle="bold"
+            android:textAlignment="center"
+            android:layout_marginBottom="12dp"/>
 
         <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="6dp"
-            android:text="Define el nombre de tu círculo y genera una invitación para conectar a tu familiar"
-            android:textColor="#4D5357"
-            android:textSize="13sp" />
+            android:fontFamily="@font/manrope_regular"
+            android:text="@string/sub_texto_config"
+            android:textSize="16sp"
+            android:textColor="@color/black"
+            android:textAlignment="center"
+            android:layout_marginBottom="25dp"/>
 
-        <LinearLayout
+        <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="18dp"
-            android:background="@drawable/bg_host_setup_panel"
-            android:orientation="vertical"
-            android:padding="14dp">
+            android:fontFamily="@font/manrope_regular"
+            android:text="Nombre del circulo"
+            android:textSize="16sp"
+            android:textColor="@color/black"
+            android:layout_marginBottom="12dp"/>
 
-            <TextView
+        <com.google.android.material.textfield.TextInputLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+            app:boxCornerRadiusTopStart="12dp"
+            app:boxCornerRadiusTopEnd="12dp"
+            app:boxCornerRadiusBottomStart="12dp"
+            app:boxCornerRadiusBottomEnd="12dp"
+            app:boxBackgroundColor="#D9E5E2"
+            app:boxStrokeColor="@android:color/transparent"
+            app:boxStrokeWidth="0dp"
+            android:fontFamily="@font/manrope_regular"
+            android:hint="ej. Familia Sanchez"
+            android:layout_marginBottom="16dp">
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/etName"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="Nombre del círculo"
-                android:textColor="#2B2F32"
-                android:textSize="11sp" />
+                android:inputType="textPersonName"/>
+        </com.google.android.material.textfield.TextInputLayout>
 
-            <EditText
-                android:id="@+id/etCircleName"
-                android:layout_width="match_parent"
-                android:layout_height="42dp"
-                android:layout_marginTop="6dp"
-                android:background="@drawable/bg_host_setup_input"
-                android:hint="Familia Suárez"
-                android:paddingStart="12dp"
-                android:paddingEnd="12dp"
-                android:textColor="#111315"
-                android:textColorHint="#8B9498"
-                android:textSize="13sp" />
 
-            <TextView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="10dp"
-                android:text="Código de invitación"
-                android:textColor="#2B2F32"
-                android:textSize="11sp" />
 
-            <TextView
-                android:id="@+id/tvInvitationCode"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:gravity="center"
-                android:text="M4nt0-W15K"
-                android:textColor="@color/manto_green"
-                android:textSize="34sp"
-                android:textStyle="bold" />
 
-            <TextView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:gravity="center"
-                android:text="Comparte este código con los miembros de tu familia para que se unan"
-                android:textColor="#4D5357"
-                android:textSize="11sp" />
+        <com.google.android.material.card.MaterialCardView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            app:cardCornerRadius="12dp"
+            app:cardElevation="4dp"
+            android:layout_marginBottom="24dp"
+
+            app:cardBackgroundColor="#E6F0EE">
+
 
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="10dp"
-                android:orientation="horizontal">
+                android:orientation="vertical"
+                android:padding="25dp">
 
-                <Button
-                    android:id="@+id/btnGenerateNewCode"
-                    android:layout_width="0dp"
-                    android:layout_height="40dp"
-                    android:layout_marginEnd="6dp"
-                    android:layout_weight="1"
-                    android:background="@drawable/bg_host_setup_light_button"
-                    android:text="Generar Nuevo"
-                    android:textAllCaps="false"
-                    android:textColor="#2D3C3D"
-                    android:textSize="11sp" />
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:fontFamily="@font/manrope_regular"
+                    android:text="Codigo de invitacion"
+                    android:textSize="16sp"
+                    android:textColor="@color/black"
+                    android:gravity="center"
+                    android:layout_marginBottom="8dp"/>
 
-                <Button
-                    android:id="@+id/btnShareCode"
-                    android:layout_width="0dp"
-                    android:layout_height="40dp"
-                    android:layout_marginStart="6dp"
-                    android:layout_weight="1"
-                    android:background="@drawable/bg_role_setup_button"
-                    android:text="Compartir"
-                    android:textAllCaps="false"
-                    android:textColor="@android:color/white"
-                    android:textSize="11sp" />
+                <TextView
+                    android:id="@+id/tvGeneratedCode"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:fontFamily="@font/manrope_regular"
+                    android:textColor="#006B64"
+                    android:text="M4nt0-W15K"
+                    android:textSize="32sp"
+                    android:gravity="center"
+                    android:textStyle="bold"
+                    android:layout_marginBottom="16dp"/>
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:fontFamily="@font/manrope_regular"
+                    android:text="Comparte este código con los miembros de tu familia para que se una"
+                    android:textSize="16sp"
+                    android:gravity="center"
+                    android:layout_marginBottom="16dp"/>
+
+                <!-- BOTONES -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:gravity="center"
+                    android:layout_marginTop="12dp">
+
+                    <androidx.appcompat.widget.AppCompatButton
+                        android:id="@+id/btnGenerateCode"
+                        android:layout_width="0dp"
+                        android:layout_height="56dp"
+                        android:layout_weight="1"
+                        android:layout_marginEnd="8dp"
+                        android:fontFamily="@font/manrope_regular"
+                        android:text="Generar Nuevo"
+                        android:textColor="@color/black"
+                        android:textAllCaps="false"
+                        android:textSize="15dp"
+                        android:drawableStart="@drawable/mdi_reload"
+                        android:drawablePadding="1dp"
+                        android:background="@drawable/bg_generar_nuevo"/>
+
+                    <androidx.appcompat.widget.AppCompatButton
+                        android:id="@+id/btnShareInviteLink"
+                        android:layout_width="0dp"
+                        android:layout_height="56dp"
+                        android:layout_weight="1"
+                        android:layout_marginStart="8dp"
+                        android:fontFamily="@font/manrope_regular"
+                        android:textSize="15dp"
+                        android:text="Compartir"
+                        android:textColor="#FFFFFF"
+                        android:textAllCaps="false"
+                        android:drawableStart="@drawable/mdi_share_variant"
+                        android:drawablePadding="1dp"
+                        android:background="@drawable/bg_iniciar_sesion_rounded"/>
+
+                </LinearLayout>
+
             </LinearLayout>
-        </LinearLayout>
+        </com.google.android.material.card.MaterialCardView>
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:fontFamily="@font/manrope_regular"
+            android:text="Ingresa el codigo de invitacion"
+            android:textSize="16sp"
+            android:textColor="@color/black"
+            android:layout_marginBottom="12dp" />
+
+        <com.google.android.material.textfield.TextInputLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+            app:boxCornerRadiusTopStart="12dp"
+            app:boxCornerRadiusTopEnd="12dp"
+            app:boxCornerRadiusBottomStart="12dp"
+            app:boxCornerRadiusBottomEnd="12dp"
+            app:boxBackgroundColor="#D9E5E2"
+            app:boxStrokeColor="@android:color/transparent"
+            app:boxStrokeWidth="0dp"
+            android:fontFamily="@font/manrope_regular"
+            android:hint="Ej. A4B92XK7"
+            android:layout_marginBottom="16dp">
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/etInvitationCode"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:inputType="textCapCharacters" />
+        </com.google.android.material.textfield.TextInputLayout>
 
         <androidx.appcompat.widget.AppCompatButton
-            android:id="@+id/btnContinueHostSetup"
+            android:id="@+id/btnLinkAccount"
+            android:layout_width="match_parent"
+            android:layout_height="56dp"
+            android:layout_marginTop="8dp"
+            android:background="@drawable/bg_iniciar_sesion_rounded"
+            android:fontFamily="@font/manrope_regular"
+            android:text="Vincular"
+            android:textAllCaps="false"
+            android:textColor="@android:color/white"
+            android:textSize="21sp"
+            android:textStyle="bold" />
+
+        <androidx.appcompat.widget.AppCompatButton
+            android:id="@+id/btnSetupContinue"
             android:layout_width="match_parent"
             android:layout_height="56dp"
             android:layout_marginTop="24dp"
@@ -161,14 +249,27 @@
             android:textSize="21sp"
             android:textStyle="bold" />
 
+        <androidx.appcompat.widget.AppCompatButton
+            android:id="@+id/btnSkipForNow"
+            android:layout_width="match_parent"
+            android:layout_height="48dp"
+            android:layout_marginTop="16dp"
+            android:background="@drawable/bg_generar_nuevo"
+            android:fontFamily="@font/manrope_regular"
+            android:text="Omitir por ahora"
+            android:textAllCaps="false"
+            android:textColor="@color/black"
+            android:textSize="16sp" />
+
         <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="10dp"
+            android:layout_marginTop="12dp"
             android:gravity="center"
+            android:fontFamily="@font/manrope_regular"
             android:text="Paso 2 de 2 - Configurando tu seguridad"
             android:textColor="#8A8D8F"
-            android:textSize="11sp"
+            android:textSize="14sp"
             android:textStyle="bold" />
     </LinearLayout>
 </ScrollView>

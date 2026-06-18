@@ -39,8 +39,8 @@
                     android:layout_weight="1"
                     android:fontFamily="@font/manrope_regular"
                     android:text="Usuario"
-                    android:textColor="#0B6E67"
-                    android:textSize="16sp"
+                    android:textColor="#0F766E"
+                    android:textSize="24sp"
                     android:textStyle="bold" />
 
                 <ImageView
@@ -64,7 +64,7 @@
                     android:fontFamily="@font/manrope_regular"
                     android:text="Tu entorno esta protegido"
                     android:textColor="@android:color/white"
-                    android:textSize="40sp"
+                    android:textSize="32sp"
                     android:textStyle="bold" />
 
                 <TextView
@@ -74,7 +74,7 @@
                     android:fontFamily="@font/manrope_regular"
                     android:text="Se han analizado 21 eventos en la ultima hora.&#10;No se detectaron amenazas."
                     android:textColor="#ECF7F5"
-                    android:textSize="11sp" />
+                    android:textSize="16sp" />
 
                 <TextView
                     android:layout_width="match_parent"
@@ -89,7 +89,7 @@
                     android:paddingBottom="8dp"
                     android:text="ESCANEO COMPLETO: ACTIVO"
                     android:textColor="#D9EEEC"
-                    android:textSize="10sp" />
+                    android:textSize="16sp" />
             </LinearLayout>
 
             <LinearLayout
@@ -125,8 +125,8 @@
                         android:paddingEnd="10dp"
                         android:paddingBottom="5dp"
                         android:text="PROTECCION WEB"
-                        android:textColor="#5A9E97"
-                        android:textSize="10sp" />
+                        android:textColor="#2E8782"
+                        android:textSize="14sp" />
                 </LinearLayout>
 
                 <TextView
@@ -135,8 +135,8 @@
                     android:layout_marginTop="8dp"
                     android:fontFamily="@font/manrope_regular"
                     android:text="Escudo de Enlaces"
-                    android:textColor="#101216"
-                    android:textSize="24sp"
+                    android:textColor="@color/black"
+                    android:textSize="28sp"
                     android:textStyle="bold" />
 
                 <TextView
@@ -145,8 +145,8 @@
                     android:layout_marginTop="6dp"
                     android:fontFamily="@font/manrope_regular"
                     android:text="Analisis de URLs sospechosas en tiempo real&#10;para prevenir phishing"
-                    android:textColor="#283236"
-                    android:textSize="12sp" />
+                    android:textColor="@color/black"
+                    android:textSize="16sp" />
 
                 <TextView
                     android:layout_width="match_parent"
@@ -154,8 +154,8 @@
                     android:layout_marginTop="8dp"
                     android:fontFamily="@font/manrope_regular"
                     android:text="Navegacion segura activada"
-                    android:textColor="#0E7A6E"
-                    android:textSize="12sp"
+                    android:textColor="#006B64"
+                    android:textSize="14sp"
                     android:textStyle="bold" />
             </LinearLayout>
 
@@ -192,8 +192,8 @@
                         android:paddingEnd="10dp"
                         android:paddingBottom="5dp"
                         android:text="ALERTAS SMS"
-                        android:textColor="#7D9B98"
-                        android:textSize="10sp" />
+                        android:textColor="#6A807E"
+                        android:textSize="14sp" />
                 </LinearLayout>
 
                 <TextView
@@ -203,7 +203,7 @@
                     android:fontFamily="@font/manrope_regular"
                     android:text="Espejo de seguridad"
                     android:textColor="#101216"
-                    android:textSize="24sp"
+                    android:textSize="28sp"
                     android:textStyle="bold" />
 
                 <TextView
@@ -212,8 +212,8 @@
                     android:layout_marginTop="6dp"
                     android:fontFamily="@font/manrope_regular"
                     android:text="Monitoreo y duplicacion de alertas SMS&#10;criticas para familiares"
-                    android:textColor="#283236"
-                    android:textSize="12sp" />
+                    android:textColor="@color/black"
+                    android:textSize="16sp" />
 
                 <TextView
                     android:layout_width="match_parent"
@@ -221,8 +221,8 @@
                     android:layout_marginTop="8dp"
                     android:fontFamily="@font/manrope_regular"
                     android:text="12 mensajes filtrados hoy"
-                    android:textColor="#0E7A6E"
-                    android:textSize="12sp"
+                    android:textColor="#006B64"
+                    android:textSize="14sp"
                     android:textStyle="bold" />
             </LinearLayout>
 
