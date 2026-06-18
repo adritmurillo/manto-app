@@ -834,11 +834,12 @@ public class ProtectedDashboardActivity extends AppCompatActivity {
     // ==========================================
 
     private void syncAppControlData(String protectedUserId, String familyGroupId) {
-        if (!BlockedAppsStore.shouldSync(this)) {
+        // 2. COMENTA ESTO TEMPORALMENTE PARA FORZAR EL ENVÍO MIENTRAS PROBAMOS
+        /* if (!BlockedAppsStore.shouldSync(this)) {
             Log.d("AppControl", "Caché reciente...");
             return;
         }
-
+        */
         GuardianApiService apiService = RetrofitClient.getApiService();
         reportInstalledAppsToBackend(apiService, protectedUserId);
         downloadBlockedApps(apiService, protectedUserId, familyGroupId);
