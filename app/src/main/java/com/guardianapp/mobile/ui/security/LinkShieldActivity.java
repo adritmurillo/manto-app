@@ -58,7 +58,7 @@ public class LinkShieldActivity extends AppCompatActivity {
             rvBlocked.setAdapter(adapter);
         }
 
-        findViewById(R.id.btnBackShield).setOnClickListener(v -> finish());
+        findViewById(R.id.btnBackFamilyCircle).setOnClickListener(v -> finish());
         btnAnalyzeLink.setOnClickListener(v -> analyzeUrl());
         btnBlockDomain.setOnClickListener(v -> blockDomain());
         adapter.setOnUnblockClickListener((item, position) -> unblockDomain(item));

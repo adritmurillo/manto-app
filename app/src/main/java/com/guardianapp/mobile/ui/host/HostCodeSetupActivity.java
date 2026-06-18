@@ -49,17 +49,16 @@ public class HostCodeSetupActivity extends AppCompatActivity {
 
         userId = getIntent() != null ? getIntent().getStringExtra(EXTRA_USER_ID) : null;
 
-        etCircleName = findViewById(R.id.etCircleName);
-        tvInvitationCode = findViewById(R.id.tvInvitationCode);
-        btnGenerate = findViewById(R.id.btnGenerateNewCode);
-        btnShare = findViewById(R.id.btnShareCode);
-        btnContinue = findViewById(R.id.btnContinueHostSetup);
-        TextView tvBack = findViewById(R.id.tvBackFromHostSetup);
+        etCircleName     = findViewById(R.id.etName);
+        tvInvitationCode = findViewById(R.id.tvGeneratedCode);
+        btnGenerate      = findViewById(R.id.btnGenerateCode);
+        btnShare         = findViewById(R.id.btnShareInviteLink);
+        btnContinue      = findViewById(R.id.btnSetupContinue);
 
         etCircleName.setText(buildDefaultCircleName());
         btnShare.setEnabled(false);
 
-        tvBack.setOnClickListener(v -> finish());
+        // tvBack.setOnClickListener(v -> finish());
         btnGenerate.setOnClickListener(v -> generateInvitationCode());
         btnShare.setOnClickListener(v -> shareOrCopyInviteLink());
         btnContinue.setOnClickListener(v -> openHostDashboard());
